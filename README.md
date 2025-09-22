@@ -3,6 +3,12 @@
 # LiveFS : Simple C HTTP File Server
 Livefs is a small C HTTP file server that enables users to download files via their browser, what makes livefs unique is its implementation of permissions.
 
+For the future I aim to add more advanced features such as encryption and actual web pages to display links to the files at this point 
+I will be able to add simple file pre-viewing.
+
+> [!CAUTION]  
+> Due to the pre-view nature of this program, it is reccomended to be used in LAN environments only until later security updates. expose to the internet at your own risk.
+
 ## Permissions Philosophy
 > [!IMPORTANT]  
 > Below is not currently implemented and is still a consept, everything is subject to change however the core consept should remain the same right up until it is finished!
@@ -30,10 +36,6 @@ the privilege level is higher at the top of a directory tree and gets lower
 the lower down the tree you are.
 
 ![Privilege Diagram](https://i.imgur.com/M5JWzzJ.png)
-
-
-
-
 
 ## Contributing
 I am totally open to contributions, especally ones addressing security concerns. As usual feel free to fork the project just keep the licence in mind, this is free software for a reason!
