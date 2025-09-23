@@ -21,7 +21,7 @@ char *find_key_in_config(char *pattern, const char *config_file, const char *key
     // find the key in the loaded config file
     char *pos = strstr(config_file, pattern);
     if (!pos) {
-        fprintf(stderr, "%s Config key not found: %s\n", ERROR, key);
+        fprintf(stderr, ERROR "Config key not found: %s\n", key);
         return NULL;
     }
 
@@ -42,7 +42,7 @@ int config_get_int(const char *config_file, const char *key){
     long value = strtol(pos, &endptr, 10);
 
     if (pos == endptr) {
-        fprintf(stderr, "%s Invalid integer for key %s\n", ERROR, key);
+        fprintf(stderr, ERROR "Invalid integer for key %s\n", key);
         return -1;
     }
 

@@ -18,7 +18,7 @@ int client_listener(int server_socket) {
         
         if (client_socket == -1) {
             perror("accept");
-            fprintf(stderr, "%s Failure to accept Client Connection\n", ERROR);
+            fprintf(stderr, ERROR "Failure to accept Client Connection\n");
             continue;
         }
 
@@ -29,7 +29,7 @@ int client_listener(int server_socket) {
 
             char *first_line = strtok(request, "\r\n");
             if (first_line) {
-                printf("%s first_line='%s'\n", INFO, first_line);
+                printf(INFO "first_line='%s'\n", first_line);
                 send_file(client_socket, first_line);
             }
         }

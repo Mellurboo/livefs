@@ -13,10 +13,10 @@ int main(int argc, const char *argv[]){
 
     char *config_file = get_config_file(working_directory);
     if (!config_file){
-        printf("%s No Config File Found!\n", FATAL);
+        printf(FATAL "No Config File Found!\n");
         return -1;
     }
-    printf("%s Registered Config File\n", INFO);
+    printf(INFO "Registered Config File\n");
 
     char root_path[PATH_MAX];
     get_root_path(root_path, sizeof(root_path));
@@ -24,9 +24,12 @@ int main(int argc, const char *argv[]){
 
     int srvport = config_get_int(config_file, "port");
     server_socket = server_create_socket(server_socket);
+
     server_bind_socket(srvport, server_socket);
     server_listen(server_socket);
-    
     client_listener(server_socket);
+
+    // Clean up, at this point the server is closed
     close(server_socket);
+    free(config_file);
 }

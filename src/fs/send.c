@@ -18,14 +18,14 @@ void send_file(int client_sock, const char *request_line) {
 
     // Parse the first line: method, path, version
     if (sscanf(request_line, "%7s %255s %15s", method, path, version) != 3) {
-        printf("%s Failed to parse request_line='%s'\n", INFO, request_line);
+        printf(INFO "Failed to parse request_line='%s'\n", request_line);
         const char *bad_request = http_bad_request_header();
         send(client_sock, bad_request, strlen(bad_request), 0);
         close(client_sock);
         return;
     }
 
-    printf("%s method='%s', path='%s', version='%s'\n", INFO, method, path, version);
+    printf(INFO "method='%s', path='%s', version='%s'\n", method, path, version);
 
     if (strcmp(method, "GET") != 0) {
         const char *not_allowed = http_method_not_allowed();
@@ -45,7 +45,7 @@ void send_file(int client_sock, const char *request_line) {
     char full_path[512];
     build_file_path(full_path, 512, path);
 
-    printf("%s opening file '%s'\n", INFO, full_path);
+    printf(INFO "opening file '%s'\n", full_path);
 
     FILE *fp = fopen(full_path, "rb");
     if (!fp) {

@@ -11,7 +11,7 @@
 const char *get_current_working_path(char *buf, size_t buf_size){
     ssize_t len = readlink("/proc/self/exe", buf, buf_size - 1);
     if (len == -1) {
-        fprintf(stderr, "%s failed to get executable path\n", ERROR);
+        fprintf(stderr, ERROR "failed to get executable path\n");
         return NULL;
     }
     buf[len] = '\0'; // null terminate

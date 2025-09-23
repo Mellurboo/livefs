@@ -33,21 +33,24 @@ char *get_config_file(const char *working_path) {
     size_t filesize = ftell(fp);
     fseek(fp, 0L, SEEK_SET);
 
-    cached_config_file = malloc(filesize);
-    if (!cached_config_file){
+    char *untrimmed_config = malloc(filesize + 1);
+    if (!untrimmed_config){
+        fclose(fp);
         return NULL;
     }
 
-    size_t read_size = fread(cached_config_file, 1, filesize, fp);
+    size_t read_size = fread(untrimmed_config, 1, filesize, fp);
+    fclose(fp);
     if (read_size != filesize){
-        fprintf(stderr, "%s Shortread :( %zu/%zu bytes\n", ERROR, read_size, filesize);
-        free(cached_config_file);
-        cached_config_file = NULL;
+        fprintf(stderr, ERROR "Shortread :( %zu/%zu bytes\n", read_size, filesize);
+        free(untrimmed_config);
+        untrimmed_config = NULL;
         return NULL;
     }
 
     // finally add null term
-    cached_config_file[filesize] = '\0';
-    cached_config_file = trim_whitespaces(cached_config_file);  // do us a favour and trim the whitespace
+    untrimmed_config[filesize] = '\0';
+    cached_config_file = malloc(strlen(trim_whitespaces(untrimmed_config)));
+    cached_config_file = trim_whitespaces(untrimmed_config);  // do us a favour and trim the whitespace
     return cached_config_file;
 }
