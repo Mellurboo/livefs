@@ -29,7 +29,7 @@ int client_listener(int server_socket) {
 
             char *first_line = strtok(request, "\r\n");
             if (first_line) {
-                printf(INFO "first_line='%s'\n", first_line);
+                printf(REQUEST "first_line='%s'\n", first_line);
                 send_file(client_socket, first_line);
             }
         }

@@ -25,7 +25,7 @@ void send_file(int client_sock, const char *request_line) {
         return;
     }
 
-    printf(INFO "method='%s', path='%s', version='%s'\n", method, path, version);
+    printf(REQUEST "method='%s', path='%s', version='%s'\n", method, path, version);
 
     if (strcmp(method, "GET") != 0) {
         const char *not_allowed = http_method_not_allowed();
@@ -45,7 +45,7 @@ void send_file(int client_sock, const char *request_line) {
     char full_path[512];
     build_file_path(full_path, 512, path);
 
-    printf(INFO "opening file '%s'\n", full_path);
+    printf(REQUEST "opening file '%s'\n", full_path);
 
     FILE *fp = fopen(full_path, "rb");
     if (!fp) {
