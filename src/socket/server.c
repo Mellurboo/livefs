@@ -24,11 +24,6 @@ int server_create_socket(int server_socket){
 /// @brief Binds the socket to a port and address, address is set to INADDR_ANY. handle cleanup if failed
 /// @param port target port to bind to
 void server_bind_socket(int port, int server_socket){
-    if (port == -1) {
-        port = FALLBACK_SERVER_PORT;
-        printf(WARN "Failure in getting server port, defaulting to %d", FALLBACK_SERVER_PORT);
-    } 
-
     memset(&server_addr, 0, sizeof(server_addr));
 
     server_addr.sin_family      = AF_INET;

@@ -1,4 +1,5 @@
 #include <config/config_file.h>
+#include <config/create_config.h>
 #include <utils/path.h>
 
 /// @brief gets the config file from disk
@@ -22,6 +23,9 @@ char *get_config_file(char *buf) {
         fp = fopen(config_file_path, "rb");
         if (!fp) {
             fprintf(stderr, FATAL "No Config file found!\n");
+            if (create_config_directory() == 0 && create_config_file() == 0){
+                printf(INFO "livefs has generated a config file at ~/.config/livefs/ go ahead and edit it, then start livefs again\n");
+            }
             exit(-1);
         }
     }
