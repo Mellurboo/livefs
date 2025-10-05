@@ -22,7 +22,7 @@ char *find_key_in_config(char *pattern, const char *config_file, const char *key
     char *pos = strstr(config_file, pattern);
     if (!pos) {
         fprintf(stderr, ERROR "Config key not found: %s\n", key);
-        return NULL;
+        exit(-1);
     }
 
     return pos;

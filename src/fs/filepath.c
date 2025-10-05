@@ -26,8 +26,8 @@ int path_exsists(const char *path){
 /// @param filename target filename
 void build_file_path(char *buf, size_t buf_size, const char *filename){
 
-    char working_directory[PATH_MAX];
-    get_current_working_path(working_directory, PATH_MAX);
+    char *working_directory;
+    working_directory = get_current_working_path();
 
     char *config_file = get_config_file(working_directory);
     char totalpath[PATH_MAX];
@@ -40,7 +40,6 @@ void build_file_path(char *buf, size_t buf_size, const char *filename){
     if (totalpath[0] == '~') {
         const char *home = getenv("HOME");
         if (!home) home = "";
-
         snprintf(buf, buf_size, "%s%s", home, totalpath + 1);
     } else {
         strncpy(buf, totalpath, buf_size - 1);
@@ -57,8 +56,8 @@ void build_file_path(char *buf, size_t buf_size, const char *filename){
 
 void get_root_path(char *buf, size_t buf_size, const char *filename){
 
-    char working_directory[PATH_MAX];
-    get_current_working_path(working_directory, PATH_MAX);
+    char *working_directory;
+    working_directory = get_current_working_path();
 
     char *config_file = get_config_file(working_directory);
     char totalpath[PATH_MAX];

@@ -8,11 +8,9 @@
 int server_socket = 0;
 
 int main(int argc, const char *argv[]){
-    char working_directory[PATH_MAX];
-    get_current_working_path(working_directory, PATH_MAX);
-
-    char *config_file = get_config_file(working_directory);
-    if (!config_file){
+    char config_file_path[PATH_MAX];
+    get_config_file(config_file_path);
+    if (config_file_path[0] == '\0'){
         printf(FATAL "No Config File Found!\n");
         return -1;
     }
@@ -22,7 +20,7 @@ int main(int argc, const char *argv[]){
     get_root_path(root_path, sizeof(root_path));
     path_exsists(root_path);
 
-    int srvport = config_get_int(config_file, "port");
+    int srvport = config_get_int(config_file_path, "port");
     server_socket = server_create_socket(server_socket);
 
     server_bind_socket(srvport, server_socket);
@@ -31,5 +29,4 @@ int main(int argc, const char *argv[]){
 
     // Clean up, at this point the server is closed
     close(server_socket);
-    free(config_file);
 }
