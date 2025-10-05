@@ -3,12 +3,13 @@
 #include <stdlib.h>
 #include <utils/terminal.h>
 
-void sigint_handler(int sig){
-    printf(INFO "Interrupt Caught, Stopping safely\n");
+void graious_shutdown(int sig){
+    printf(INFO "Signal Caught, Stopping safely\n");
     exit(0);
 }
 
 /// @brief register the signals to handler functions
 void exit_handlers(){
-    signal(SIGINT, sigint_handler);
+    signal(SIGINT, graious_shutdown);
+    signal(SIGTERM, graious_shutdown);
 }
