@@ -1,4 +1,5 @@
 #include <config/config_file.h>
+#include <utils/exit_handler.h>
 #include <socket/socket.h>
 #include <fs/filepath.h>
 #include <utils/path.h>
@@ -7,7 +8,17 @@
 
 int server_socket = 0;
 
+void exitcall(void){
+    printf(INFO "livefs has closed\n");
+    close(server_socket);
+}
+
 int main(int argc, const char *argv[]){
+    int atexit_return = atexit(exitcall);
+    if (atexit_return != 0) {printf(WARN "atexit was not set\n");}
+
+    exit_handlers();
+
     char working_directory[PATH_MAX];
     get_current_exec_path(working_directory, PATH_MAX);
 
