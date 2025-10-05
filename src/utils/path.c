@@ -8,7 +8,7 @@
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
 /// @return path
-const char *get_current_working_path(char *buf, size_t buf_size){
+const char *get_current_exec_path(char *buf, size_t buf_size){
     ssize_t len = readlink("/proc/self/exe", buf, buf_size - 1);
     if (len == -1) {
         fprintf(stderr, ERROR "failed to get executable path\n");

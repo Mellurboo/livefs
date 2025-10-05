@@ -9,7 +9,7 @@ int server_socket = 0;
 
 int main(int argc, const char *argv[]){
     char working_directory[PATH_MAX];
-    get_current_working_path(working_directory, PATH_MAX);
+    get_current_exec_path(working_directory, PATH_MAX);
 
     char *config_file = get_config_file(working_directory);
     if (!config_file){
