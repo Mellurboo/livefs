@@ -27,7 +27,7 @@ int path_exsists(const char *path){
 void build_file_path(char *buf, size_t buf_size, const char *filename){
 
     char *working_directory;
-    working_directory = get_current_working_path();
+    working_directory = get_current_exec_path();
 
     char *config_file = get_config_file(working_directory);
     char totalpath[PATH_MAX];
@@ -57,7 +57,7 @@ void build_file_path(char *buf, size_t buf_size, const char *filename){
 void get_root_path(char *buf, size_t buf_size, const char *filename){
 
     char *working_directory;
-    working_directory = get_current_working_path();
+    working_directory = get_current_exec_path();
 
     char *config_file = get_config_file(working_directory);
     char totalpath[PATH_MAX];

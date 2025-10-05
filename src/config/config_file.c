@@ -8,7 +8,7 @@ char *get_config_file(char *buf) {
     char config_file_path[PATH_MAX];
 
     // if there is a config file in the same directory as the executable, we will piroritise it
-    strcpy(config_file_path, get_current_working_path());
+    strcpy(config_file_path, get_current_exec_path());
     strcat(config_file_path, config_file);
     FILE *fp = fopen(config_file_path, "rb");
     if (fp) {

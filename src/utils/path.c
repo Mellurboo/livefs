@@ -9,9 +9,8 @@
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
 /// @return path
-char *get_current_working_path(void){
-    static char path_buffer[PATH_MAX];
-    if (path_buffer == NULL) return path_buffer;
+char *get_current_exec_path(void){
+    char path_buffer[PATH_MAX];
 
     ssize_t len = readlink("/proc/self/exe", path_buffer, PATH_MAX - 1);
     if (len == -1) {

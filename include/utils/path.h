@@ -4,5 +4,5 @@
 #include <utils/terminal.h>
 #include <linux/limits.h>
 
-char *get_current_working_path(void);
+char *get_current_exec_path(void);
 char *get_home_path(void);
