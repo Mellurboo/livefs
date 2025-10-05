@@ -3,6 +3,7 @@
 #include <utils/terminal.h>
 #include <linux/limits.h>
 #include <string.h>
+#include <stdlib.h>
 
 /// @brief gets the parent path of the current working directory.
 /// @param buf dest buffer
@@ -23,4 +24,28 @@ const char *get_current_exec_path(char *buf, size_t buf_size){
     }
 
     return buf;
+}
+
+/// @brief returns the home path of the current user
+/// @return path
+const char *get_home_path(void){
+    static char *cached_home_path = NULL;
+    if (cached_home_path != NULL) return cached_home_path;
+
+    char *home = getenv("HOME");
+    if (home == NULL){
+        // we have to check for this and then return as we are about
+        // to add a '/', so if this value is empty it will be just '/' a.k.a
+        // root, potentially exposing the servers root directory!
+        return NULL;
+    }
+
+    size_t len = strlen(home);
+    if (len + 1 < sizeof(home)){
+        home[len] = '/';
+        home[len+1] = '\0';
+    }
+
+    cached_home_path = home;
+    return cached_home_path;
 }
