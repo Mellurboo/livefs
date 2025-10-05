@@ -7,25 +7,22 @@
 
 /// @brief gets the parent path of the current working directory.
 /// @param buf dest buffer
-/// @param buf_size dest buffer size
 /// @return path
-char *get_current_exec_path(void){
-    char path_buffer[PATH_MAX];
-
-    ssize_t len = readlink("/proc/self/exe", path_buffer, PATH_MAX - 1);
+char *get_current_exec_path(char *buf){
+    ssize_t len = readlink("/proc/self/exe", buf, PATH_MAX - 1);
     if (len == -1) {
         fprintf(stderr, ERROR "failed to get executable path\n");
         return NULL;
     }
-    path_buffer[len] = '\0'; // null terminate
+    buf[len] = '\0'; // null terminate
 
     // strip off the filename to get the parent directory
-    char *last_slash = strrchr(path_buffer, '/');
+    char *last_slash = strrchr(buf, '/');
     if (last_slash != NULL) {
         *last_slash = '\0'; // truncate at the last '/'
     }
-    
-    return path_buffer;
+
+    return buf;
 }
 
 /// @brief returns the home path of the current user
