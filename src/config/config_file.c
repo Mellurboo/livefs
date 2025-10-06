@@ -5,6 +5,17 @@
 /// @brief gets the config file from disk
 /// @return FILE config
 char *get_config_file(char *buf) {
+    allocate_config_file(buf);
+
+    char *trimmed_config = trim_whitespaces(buf);
+    if (trimmed_config != buf){
+        memmove(buf, trimmed_config, strlen(trimmed_config) + 1);
+    }
+
+    return buf;
+}
+
+char *alloc_config_file(char *buf){
     char *config_file = "/config.cfg";
     char config_file_path[PATH_MAX];
 
@@ -22,22 +33,17 @@ char *get_config_file(char *buf) {
         strcat(config_file_path, config_file);
         fp = fopen(config_file_path, "rb");
         if (!fp) {
-            fprintf(stderr, FATAL "No Config file found!\n");
+            fprintf(stderr, ERROR "No Config file found! livefs will now attempt to generate one\n");
             if (create_config_directory() == 0 && create_config_file() == 0){
-                printf(INFO "livefs has generated a config file at ~/.config/livefs/ go ahead and edit it, then start livefs again\n");
+                printf(INFO "livefs has generated a config file at ~/.config/livefs/ we're using the default config for now\n");
+            }else{
+                fprintf(stderr, FATAL "Failure in generating automatic config file generation\n");
+                exit(-1);
             }
-            exit(-1);
         }
     }
     
     size_t read_config = fread(buf, 1, PATH_MAX - 1, fp);
     fclose(fp);
     buf[read_config] = '\0';
-
-    char *trimmed_config = trim_whitespaces(buf);
-    if (trimmed_config != buf){
-        memmove(buf, trimmed_config, strlen(trimmed_config) + 1);
-    }
-
-    return buf;
 }
