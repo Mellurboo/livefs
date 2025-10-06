@@ -15,7 +15,7 @@ char *get_config_file(char *buf) {
     return buf;
 }
 
-char *alloc_config_file(char *buf){
+void alloc_config_file(char *buf){
     char *config_file = "/config.cfg";
     char config_file_path[PATH_MAX];
 
