@@ -29,5 +29,3 @@ int config_get_int(const char *config_file, const char *key);
 /// @param key name
 /// @return value of key
 char *config_get_value(const char *config_file, const char *key);
-
-void alloc_config_file(char *buf);
