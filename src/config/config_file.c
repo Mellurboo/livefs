@@ -5,7 +5,7 @@
 /// @brief gets the config file from disk
 /// @return FILE config
 char *get_config_file(char *buf) {
-    allocate_config_file(buf);
+    alloc_config_file(buf);
 
     char *trimmed_config = trim_whitespaces(buf);
     if (trimmed_config != buf){
