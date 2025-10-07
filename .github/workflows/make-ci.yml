@@ -21,8 +21,5 @@ jobs:
     - name: Build project (64-bit)
       run: make
 
-    - name: Run binary (optional runtime check)
-      run: make run || echo "Run step failed or skipped."
-
     - name: Clean build artifacts
       run: make clean
