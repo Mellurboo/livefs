@@ -26,10 +26,10 @@ int path_exsists(const char *path){
 /// @param filename target filename
 void build_file_path(char *buf, size_t buf_size, const char *filename){
 
-    char working_directory[PATH_MAX];
-    get_current_exec_path(working_directory, PATH_MAX);
+    char exec_directory[PATH_MAX];
+    get_current_exec_path(exec_directory);
 
-    char *config_file = get_config_file(working_directory);
+    char *config_file = get_config_file(exec_directory);
     char totalpath[PATH_MAX];
     strncpy(totalpath, config_get_value(config_file, "root"), sizeof(totalpath) - 1);
 
@@ -57,10 +57,10 @@ void build_file_path(char *buf, size_t buf_size, const char *filename){
 
 void get_root_path(char *buf, size_t buf_size, const char *filename){
 
-    char working_directory[PATH_MAX];
-    get_current_exec_path(working_directory, PATH_MAX);
+    char exec_directory[PATH_MAX];
+    get_current_exec_path(exec_directory);
 
-    char *config_file = get_config_file(working_directory);
+    char *config_file = get_config_file(exec_directory);
     char totalpath[PATH_MAX];
     strncpy(totalpath, config_get_value(config_file, "root"), sizeof(totalpath) - 1);
 

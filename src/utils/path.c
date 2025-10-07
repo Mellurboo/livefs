@@ -6,11 +6,9 @@
 #include <stdlib.h>
 
 /// @brief gets the parent path of the current working directory.
-/// @param buf dest buffer
-/// @param buf_size dest buffer size
 /// @return path
-const char *get_current_exec_path(char *buf, size_t buf_size){
-    ssize_t len = readlink("/proc/self/exe", buf, buf_size - 1);
+const char *get_current_exec_path(char *buf){
+    ssize_t len = readlink("/proc/self/exe", buf, PATH_MAX - 1);
     if (len == -1) {
         fprintf(stderr, ERROR "failed to get executable path\n");
         return NULL;
@@ -29,23 +27,18 @@ const char *get_current_exec_path(char *buf, size_t buf_size){
 /// @brief returns the home path of the current user
 /// @return path
 const char *get_home_path(void){
-    static char *cached_home_path = NULL;
-    if (cached_home_path != NULL) return cached_home_path;
+    static char cached_home_path[PATH_MAX] = {0};
 
-    char *home = getenv("HOME");
-    if (home == NULL){
-        // we have to check for this and then return as we are about
-        // to add a '/', so if this value is empty it will be just '/' a.k.a
-        // root, potentially exposing the servers root directory!
+    if (cached_home_path[0] != '\0') return cached_home_path;
+
+    const char *home_path = getenv("HOME");
+    if (home_path == NULL || home_path[0] == '\0'){
+        fprintf(stderr, ERROR "HOME environment variable is not set\n");
         return NULL;
     }
 
-    size_t len = strlen(home);
-    if (len + 1 < sizeof(home)){
-        home[len] = '/';
-        home[len+1] = '\0';
-    }
+    strncpy(cached_home_path, home_path, sizeof(cached_home_path) - 1);
+    cached_home_path[sizeof(cached_home_path) - 1] = '\0';
 
-    cached_home_path = home;
     return cached_home_path;
 }

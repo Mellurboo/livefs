@@ -16,13 +16,10 @@ void exitcall(void){
 int main(int argc, const char *argv[]){
     int atexit_return = atexit(exitcall);
     if (atexit_return != 0) {printf(WARN "atexit was not set\n");}
-
     exit_handlers();
 
-    char working_directory[PATH_MAX];
-    get_current_exec_path(working_directory, PATH_MAX);
+    char *config_file = get_config_file();
 
-    char *config_file = get_config_file(working_directory);
     if (!config_file){
         printf(FATAL "No Config File Found!\n");
         return -1;
