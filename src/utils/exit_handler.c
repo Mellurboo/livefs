@@ -12,4 +12,5 @@ void graious_shutdown(int sig){
 void exit_handlers(){
     signal(SIGINT, graious_shutdown);
     signal(SIGTERM, graious_shutdown);
+    signal(SIGPIPE, SIG_IGN);
 }
