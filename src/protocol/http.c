@@ -50,6 +50,18 @@ const char *http_not_found_header(){
     return not_found_header;
 }
 
+/// @return HTTP 418 I'm a teapot
+const char *http_im_a_teapot(){
+    const char *im_a_teapot =
+            "HTTP/1.1 418 I'm a teapot\r\n"
+            "Content-Length: 11\r\n"
+            "Content-Type: text/plain\r\n"
+            "Connection: close\r\n"
+            "\r\n"
+            "I'm a teapot";
+    return im_a_teapot;
+}
+
 /// @return HTTP 200 not found header
 const char *http_success(char *fname, off_t content_size) {
     static char success_header[512];

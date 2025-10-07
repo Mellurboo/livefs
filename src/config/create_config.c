@@ -8,18 +8,32 @@
 #include <utils/path.h>
 
 int create_config_directory(void){
-    const char *config_file_path = "/.config/livefs";
-    size_t path_size = strlen(get_home_path()) + strlen(config_file_path) + 1;
+    const char *home_path = get_home_path();
+    if (!home_path){
+        fprintf(stderr, FATAL "failure to determine home path");
+        return -1;
+    }
 
-    char *directory_path = malloc(path_size);
+    const char *config_file_path = "/.config/livefs";
+    char config_dir[PATH_MAX];
+
+    size_t directory_path_size = strlen(get_home_path()) + strlen(config_file_path) + 1;
+    char *directory_path = malloc(directory_path_size);
+
     if (!directory_path){
         fprintf(stderr, FATAL "Out of Memory!\n");
         exit(-1);
     }
 
-    snprintf(directory_path, path_size, "%s%s", get_home_path(), config_file_path);
+    snprintf(config_dir, sizeof(config_dir), "%s/.config", get_home_path());
+    snprintf(directory_path, directory_path_size, "%s%s", get_home_path(), config_file_path);
 
-    if (mkdir(directory_path, 0777) == 0){
+    if (mkdir(config_dir, 0700) != 0 && errno != EEXIST){
+        perror("mkdir ~/.config");
+        return -1;
+    }
+
+    if (mkdir(directory_path, 0700) == 0){
         free(directory_path);
         return 0;
     }else {
