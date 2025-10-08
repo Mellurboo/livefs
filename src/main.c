@@ -1,6 +1,9 @@
+#define GT_IMPLEMENTATION
+
 #include <config/config_file.h>
 #include <utils/exit_handler.h>
 #include <socket/socket.h>
+#include <vendor/gt/gt.h>
 #include <fs/filepath.h>
 #include <utils/path.h>
 #include <stdio.h>
@@ -29,6 +32,8 @@ int main(int argc, const char *argv[]){
     char root_path[PATH_MAX];
     get_root_path(root_path, sizeof(root_path));
     path_exsists(root_path);
+
+    gtinit();
 
     int srvport = config_get_int(config_file, "port");
     server_socket = server_create_socket(server_socket);
