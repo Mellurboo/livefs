@@ -7,6 +7,8 @@
 #include <config/create_config.h>
 #include <utils/path.h>
 
+/// @brief Creates .config/livefs file if it doesn't exsist
+/// @return success?
 int create_config_directory(void){
     const char *home_path = get_home_path();
     if (!home_path){
@@ -47,6 +49,8 @@ int create_config_directory(void){
     }
 }
 
+/// @brief creates the config.cfg file
+/// @return success?
 int create_config_file(){
     const char *config_file_path = "/.config/livefs/config.cfg";
     size_t path_size = strlen(get_home_path()) + strlen(config_file_path) + 1;
@@ -65,7 +69,7 @@ int create_config_file(){
         exit(-1);
     }
 
-    fprintf(fp, STANDARD_CONFIG);
+    fprintf(fp, STANDARD_CONFIG);   // write the default config file content
     fclose(fp);
 
     return 0;

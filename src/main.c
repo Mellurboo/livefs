@@ -11,6 +11,7 @@
 
 int server_socket = 0;
 
+/// @brief this code executes when the server catches an exit signal
 void exitcall(void){
     printf(INFO "livefs has closed\n");
     close(server_socket);
@@ -29,8 +30,7 @@ int main(int argc, const char *argv[]){
     }
     printf(INFO "Registered Config File\n");
 
-    char root_path[PATH_MAX];
-    get_root_path(root_path, sizeof(root_path));
+    const char *root_path = parse_config_root_path();
     path_exsists(root_path);
 
     gtinit();
@@ -38,11 +38,12 @@ int main(int argc, const char *argv[]){
     int srvport = config_get_int(config_file, "port");
     server_socket = server_create_socket(server_socket);
 
+    free(config_file);
+
     server_bind_socket(srvport, server_socket);
     server_listen(server_socket);
     client_listener(server_socket);
 
     // Clean up, at this point the server is closed
     close(server_socket);
-    free(config_file);
 }

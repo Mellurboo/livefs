@@ -6,6 +6,8 @@
 #include <string.h>
 #include <unistd.h>
 
+/// @brief Handles the client request and closing it when appropriate
+/// @param fd_void file descriptor
 void client_handler(void* fd_void) {
     int client_socket = (uintptr_t)fd_void;
     char request[BUFFER_SIZE];
@@ -15,7 +17,7 @@ void client_handler(void* fd_void) {
         request[n] = '\0';
         char *first_line = strtok(request, "\r\n");
         if (first_line) {
-            printf(REQUEST "first_line='%s'\n", first_line);
+            printf(REQUEST "First Line = '%s'\n", first_line);
             gtblockfd(client_socket, GTBLOCKOUT);
             send_file(client_socket, first_line);
         }

@@ -7,36 +7,37 @@
 #include <config/create_config.h>
 #include <utils/path.h>
 
-static FILE *open_config_file(char *out_buffer, size_t out_len){
+/// @brief Opens the config file or creates it or calls to create it if it doesnt exsist
+/// @return returns the file pointer THE CALLER *MUST* CLOSE IT!
+static FILE *open_config_file(){
     const char *config_file = "/config.cfg";
-    char exec_path_buffer[PATH_MAX];    //this is dodgy i hate it
-
+    char config_file_path[PATH_MAX];
     /*
         First we will try see if the config file is in the executable directory
         then we will check if it is in ~/.config/livefs
         if it isnt there then we will try and make one in ~/.config/livefs
     */
 
-    const char *exec_path = get_current_exec_path(exec_path_buffer);
+    const char *exec_path = get_current_exec_path();
     
     if (exec_path){
-        if (snprintf(out_buffer, out_len, "%s%s", exec_path, config_file) < 0) return NULL;
-        FILE *fp = fopen(out_buffer, "rb");
+        if (snprintf(config_file_path, sizeof(config_file_path), "%s%s", exec_path, config_file) < 0) return NULL;
+        FILE *fp = fopen(config_file_path, "rb");
         if (fp) return fp;
     }
 
     const char *home_path = get_home_path();
     if (home_path){
-        if (snprintf(out_buffer, out_len, "%s/.config/livefs%s", home_path, config_file) < 0) return NULL;
-        FILE *fp = fopen(out_buffer, "rb");
+        if (snprintf(config_file_path, sizeof(config_file_path), "%s/.config/livefs%s", home_path, config_file) < 0) return NULL;
+        FILE *fp = fopen(config_file_path, "rb");
         if (fp) return fp;
     }
 
     if (create_config_directory() == 0 && create_config_file() == 0){
         printf(INFO "livefs has generated a config file at ~/.config/livefs/\n");
         if (home_path){
-            if (snprintf(out_buffer, out_len, "%s/.config/livefs%s", home_path, config_file) < 0) return NULL;
-            FILE *fp = fopen(out_buffer, "rb");
+            if (snprintf(config_file_path, sizeof(config_file_path), "%s/.config/livefs%s", home_path, config_file) < 0) return NULL;
+            FILE *fp = fopen(config_file_path, "rb");
             if (fp) return fp;
             
             // fallthrough here means something went south.
@@ -51,6 +52,8 @@ static FILE *open_config_file(char *out_buffer, size_t out_len){
     return NULL;
 }
 
+/// @brief Reads the config file from disk and writes it to memory
+/// @return pointer to config file in memory
 char *read_config_file(void){
     char config_file_path[PATH_MAX];
     FILE *fp = open_config_file(config_file_path, sizeof config_file_path);
@@ -66,7 +69,7 @@ char *read_config_file(void){
         exit(-1);
     }
 
-    size_t config_file_size = (size_t)ftell(fp);
+    const size_t config_file_size = (size_t)ftell(fp);
     rewind(fp);
 
     char *untrimmed_config_file = malloc(config_file_size + 1);
@@ -88,11 +91,13 @@ char *read_config_file(void){
     }
 
     untrimmed_config_file[bytes_read] = '\0';
-
     fclose(fp);
+
     return untrimmed_config_file;
 }
 
+/// @brief trims config file whitespace, realloc the buffer
+/// @return returns new pointer to config file
 char *get_config_file(void){
     char *config_file = read_config_file();
     if (!config_file) return NULL;

@@ -42,8 +42,9 @@ void send_file(int client_sock, const char *request_line) {
         return;
     }
 
-    char full_path[512];
-    build_file_path(full_path, 512, path);
+    char full_path[PATH_MAX];
+    strncpy(full_path, build_file_path(path), sizeof(full_path) - 1);
+    full_path[sizeof(full_path) - 1] = '\0';
 
     printf(REQUEST "opening file '%s'\n", full_path);
 

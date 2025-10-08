@@ -7,7 +7,7 @@
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
 /// @param filename target filename
-void build_file_path(char *buf, size_t buf_size, const char *filename);
+const char *build_file_path(const char *filename);
 
 /// @brief check if the path provided exsists
 /// @param path target
@@ -17,4 +17,4 @@ int path_exsists(const char *path);
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
 /// @param filename target filename
-void get_root_path(char *buf, size_t buf_size);
+const char *parse_config_root_path(void);

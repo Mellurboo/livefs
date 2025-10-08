@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <utils/terminal.h>
 
+/// @brief catches signal response
+/// @param sig 
 void graious_shutdown(int sig){
     printf(INFO "Signal Caught, Stopping safely\n");
     exit(0);

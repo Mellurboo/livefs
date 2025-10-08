@@ -7,7 +7,9 @@
 
 /// @brief gets the parent path of the current working directory.
 /// @return path
-const char *get_current_exec_path(char *buf){
+const char *get_current_exec_path(void){
+    static char buf[PATH_MAX];
+
     ssize_t len = readlink("/proc/self/exe", buf, PATH_MAX - 1);
     if (len == -1) {
         fprintf(stderr, ERROR "failed to get executable path\n");

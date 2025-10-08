@@ -7,6 +7,7 @@
 #include <config/config_file.h>
 #include <utils/path.h>
 #include <unistd.h>
+#include <fs/filepath.h>
 
 /// @brief check if the path provided exsists
 /// @param path target
@@ -24,57 +25,46 @@ int path_exsists(const char *path){
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
 /// @param filename target filename
-void build_file_path(char *buf, size_t buf_size, const char *filename){
-
-    char exec_directory[PATH_MAX];
-    get_current_exec_path(exec_directory);
-
-    char *config_file = get_config_file(exec_directory);
-    char totalpath[PATH_MAX];
-    strncpy(totalpath, config_get_value(config_file, "root"), sizeof(totalpath) - 1);
-
-    if (filename[0] == '/'){
-        filename++;
+const char *build_file_path(const char *filename){
+    const char *root_path = parse_config_root_path();
+    if (!root_path || !*root_path){
+        fprintf(stderr, FATAL "Root Path was found empty when building file path\n");
+        return "";
     }
 
-    if (totalpath[0] == '~') {
-        const char *home = getenv("HOME");
-        if (!home) home = "";
+    if (filename[0] == '/') filename++;
+    if (!filename) filename = "";
 
-        snprintf(buf, buf_size, "%s%s", home, totalpath + 1);
-    } else {
-        strncpy(buf, totalpath, buf_size - 1);
-        buf[buf_size - 1] = '\0';
-    }
+    static char full_path[PATH_MAX];
+    snprintf(full_path, sizeof(full_path), "%s%s", root_path, filename);
 
-    size_t len = strlen(buf);
-    if (len > 0 && buf[len - 1] != '/') {
-        strncat(buf, "/", buf_size - len - 1);
-    }
-
-    strncat(buf, filename, buf_size - strlen(buf) - 1);
+    return full_path;
 }
 
-void get_root_path(char *buf, size_t buf_size, const char *filename){
+/// @brief Builds the Config Root Path, the server will read from here when looking for files
+/// @return Parsed file path, the root for which the servers accessable files are
+const char *parse_config_root_path(void){
+    char *config_file = get_config_file();
 
-    char exec_directory[PATH_MAX];
-    get_current_exec_path(exec_directory);
-
-    char *config_file = get_config_file(exec_directory);
-    char totalpath[PATH_MAX];
-    strncpy(totalpath, config_get_value(config_file, "root"), sizeof(totalpath) - 1);
-
-    if (filename[0] == '/'){
-        filename++;
+    const char *root_key = config_get_value(config_file, "root");
+    if (!root_key){
+        fprintf(stderr, FATAL "No root key provided, or is unreadable.");
+        free(config_file);
+        return NULL;
     }
 
-    if (totalpath[0] == '~') {
-        const char *home = getenv("HOME");
-        if (!home) home = "";
+    char total_path[PATH_MAX];
+    strncpy(total_path, root_key, sizeof(total_path) - 1);
+    total_path[sizeof(total_path) - 1] = '\0';
 
-        snprintf(buf, buf_size, "%s%s", home, totalpath + 1);
-    } else {
-        strncpy(buf, totalpath, buf_size - 1);
-        buf[buf_size - 1] = '\0';
+    static char parsed_path[PATH_MAX];
+    if (total_path[0] == '~'){
+        const char *home_path = get_home_path();
+        snprintf(parsed_path, sizeof(parsed_path), "%s%s", home_path, total_path + 1);
+    }else{
+        strcpy(parsed_path, total_path);
     }
+
+    free(config_file);
+    return parsed_path;
 }
