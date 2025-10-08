@@ -46,4 +46,4 @@ I'm not doing anything ground breaking, if anything this is another learning exp
 
 thank you for checking out my project.
 
-Made with Love and C, by Mellurboo.
+Made with Love and C, by Mellurboo (and all the people in the Unmapped Nest Discord Server who helped me along the way)

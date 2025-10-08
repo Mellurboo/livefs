@@ -25,18 +25,23 @@ int path_exsists(const char *path){
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
 /// @param filename target filename
-const char *build_file_path(const char *filename){
+const char *build_file_path(const char *filename) {
     const char *root_path = parse_config_root_path();
-    if (!root_path || !*root_path){
-        fprintf(stderr, FATAL "Root Path was found empty when building file path\n");
+    if (!root_path || !*root_path) {
+        fprintf(stderr, "FATAL: Root Path was empty\n");
         return "";
     }
 
-    if (filename[0] == '/') filename++;
-    if (!filename) filename = "";
+    if (!filename) filename = "";         // Check NULL first
+    if (filename[0] == '/') filename++;   // Skip leading '/'
 
     static char full_path[PATH_MAX];
-    snprintf(full_path, sizeof(full_path), "%s%s", root_path, filename);
+
+    if (strcmp(filename, "") == 0) {     // serve default index.html
+        snprintf(full_path, sizeof(full_path), "%s/index.html", root_path);
+    } else {
+        snprintf(full_path, sizeof(full_path), "%s%s", root_path, filename);
+    }
 
     return full_path;
 }

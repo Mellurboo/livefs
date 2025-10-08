@@ -1,6 +1,20 @@
 #include <stdio.h>
 #include <inttypes.h>
+#include <string.h>
 #include <sys/socket.h>
+
+const char *get_content_type(const char *filename) {
+    const char *ext = strrchr(filename, '.');
+    if (!ext) return "application/octet-stream"; // fallback
+
+    if (strcmp(ext, ".html") == 0 || strcmp(ext, ".htm") == 0) return "text/html";
+    if (strcmp(ext, ".css") == 0) return "text/css";
+    if (strcmp(ext, ".js") == 0) return "application/javascript";
+    if (strcmp(ext, ".png") == 0) return "image/png";
+    if (strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0) return "image/jpeg";
+    if (strcmp(ext, ".gif") == 0) return "image/gif";
+    return "application/octet-stream"; // default
+}
 
 /// @return ERROR 400: HTTP bad request header
 const char *http_bad_request_header(){
@@ -63,15 +77,15 @@ const char *http_im_a_teapot(){
 }
 
 /// @return HTTP 200 not found header
-const char *http_success(char *fname, off_t content_size) {
+const char *http_success(const char *fname, off_t content_size) {
     static char success_header[512];
     snprintf(success_header, sizeof(success_header),
         "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/octet-stream\r\n"
-        "Content-Disposition: attachment; filename=\"%s\"\r\n"
-        "Content-Length: %ld\r\n"
+        "Content-Type: %s\r\n"
         "Connection: close\r\n"
+        "Content-Length: %" PRId64 "\r\n"
         "\r\n",
-        fname, content_size);
+        get_content_type(fname),
+        (int64_t)content_size);
     return success_header;
 }
