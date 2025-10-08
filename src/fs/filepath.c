@@ -40,7 +40,7 @@ const char *build_file_path(const char *filename) {
     if (strcmp(filename, "") == 0) {     // serve default index.html
         snprintf(full_path, sizeof(full_path), "%s/index.html", root_path);
     } else {
-        snprintf(full_path, sizeof(full_path), "%s%s", root_path, filename);
+        snprintf(full_path, sizeof(full_path), "%s/%s", root_path, filename);
     }
 
     return full_path;
