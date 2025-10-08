@@ -78,15 +78,18 @@ const char *http_im_a_teapot(){
 }
 
 /// @return HTTP 200 not found header
-const char *http_success(const char *fname, off_t content_size) {
+const char *http_success(const char *fname, off_t content_size, int force_download) {
     static char success_header[512];
+    const char *content_type = get_content_type(fname);
+    if (force_download) content_type = "application/octet-stream";
+
     snprintf(success_header, sizeof(success_header),
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: %s\r\n"
         "Connection: close\r\n"
         "Content-Length: %" PRId64 "\r\n"
         "\r\n",
-        get_content_type(fname),
+        content_type,
         (int64_t)content_size);
     return success_header;
 }

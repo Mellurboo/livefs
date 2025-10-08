@@ -15,4 +15,4 @@ const char *http_not_found_header();
 const char *http_im_a_teapot();
 
 /// @return Place HTTP 200 in Buffer Provided
-const char *http_success(char *fname, off_t content_size);
+const char *http_success(char *fname, off_t content_size, int force_download);

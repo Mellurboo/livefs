@@ -8,6 +8,7 @@
 #include <utils/path.h>
 #include <unistd.h>
 #include <fs/filepath.h>
+#include <socket/request_arguement.h>
 
 /// @brief check if the path provided exsists
 /// @param path target
@@ -36,14 +37,14 @@ const char *build_file_path(const char *filename) {
     if (filename[0] == '/') filename++;   // Skip leading '/'
 
     static char full_path[PATH_MAX];
-
+    
     if (strcmp(filename, "") == 0) {     // serve default index.html
         snprintf(full_path, sizeof(full_path), "%s/index.html", root_path);
     } else {
         snprintf(full_path, sizeof(full_path), "%s/%s", root_path, filename);
     }
 
-    return full_path;
+    return strip_arguemnts(full_path);
 }
 
 /// @brief Builds the Config Root Path, the server will read from here when looking for files

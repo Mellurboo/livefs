@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <libgen.h>
 #include <protocol/http.h>
+#include <socket/request_arguement.h>
 
 #define BUFFER_SIZE 1024
 
@@ -43,7 +44,6 @@ void send_file(int client_sock, const char *request_line) {
     }
 
     char full_path[PATH_MAX];
-
     strncpy(full_path, build_file_path(path), sizeof(full_path) - 1);
     full_path[sizeof(full_path) - 1] = '\0';
 
@@ -65,7 +65,7 @@ void send_file(int client_sock, const char *request_line) {
     stat(full_path, &fileinfo);
     char *fname = basename(full_path);
 
-    const char *success_header = http_success(fname, fileinfo.st_size);
+    const char *success_header = http_success(fname, fileinfo.st_size, request_has_arguement(path, "download"));
     send(client_sock, success_header, strlen(success_header), 0);
 
     // Send file to the client, this is unencrypted and insecure
