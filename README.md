@@ -6,6 +6,8 @@ Livefs is a small C HTTP file server that enables users to download files via th
 For the future I aim to add more advanced features such as encryption and actual web pages to display links to the files at this point 
 I will be able to add simple file pre-viewing.
 
+Check out the official test server at `livefs.chumnet.xyz` and see it in action
+
 > [!CAUTION]  
 > Due to the pre-view nature of this program, it is reccomended to be used in LAN environments only until later security updates. expose to the internet at your own risk.
 
