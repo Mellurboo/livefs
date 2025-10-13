@@ -8,6 +8,7 @@
 #include <libgen.h>
 #include <protocol/http.h>
 #include <socket/request_arguement.h>
+#include <fs/descriptors/descriptors.h>
 
 #define BUFFER_SIZE 1024
 
@@ -48,6 +49,13 @@ void send_file(int client_sock, const char *request_line) {
     full_path[sizeof(full_path) - 1] = '\0';
 
     printf(REQUEST "opening file '%s'\n", full_path);
+
+    if (!read_descriptor_file(full_path)){
+        const char *not_found = http_not_found_header();
+        send(client_sock, not_found, strlen(not_found), 0);
+        close(client_sock);
+        return;
+    }
 
     FILE *fp = fopen(full_path, "rb");
     if (!fp) {

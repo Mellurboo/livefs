@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,9 +40,9 @@ const char *build_file_path(const char *filename) {
     static char full_path[PATH_MAX];
     
     if (strcmp(filename, "") == 0) {     // serve default index.html
-        snprintf(full_path, sizeof(full_path), "%s/index.html", root_path);
+        snprintf(full_path, sizeof(full_path), "%sindex.html", root_path);
     } else {
-        snprintf(full_path, sizeof(full_path), "%s/%s", root_path, filename);
+        snprintf(full_path, sizeof(full_path), "%s%s", root_path, filename);
     }
 
     return strip_arguemnts(full_path);
@@ -73,4 +74,31 @@ const char *parse_config_root_path(void){
 
     free(config_file);
     return parsed_path;
+}
+
+/// @brief gets the stripped name of a parent directory
+/// @param file_path target path
+/// @return only returns the name of the directory name, NOT WHOLE PATH!
+const char *get_file_directory_name(const char *file_path){
+    char path[PATH_MAX];
+
+    // copy path and remove trailing slashes
+    strncpy(path, file_path, sizeof(path) - 1);
+    path[sizeof(path) - 1] = '\0';
+
+    size_t len = strlen(path);
+    while (len > 1 && path[len - 1] == '/') path[--len] = '\0';
+
+    // Remove last component or filename
+    char *last_slash = strrchr(path, '/');
+    if (!last_slash) return NULL; // no parent dir
+    *last_slash = '\0';
+
+    // Find parent directory name
+    char *parent_slash = strrchr(path, '/');
+    char *parent_name = parent_slash ? parent_slash + 1 : path;
+
+    // put the result of parent name in name and return as the result
+    char *name = strdup(parent_name);
+    return name;
 }

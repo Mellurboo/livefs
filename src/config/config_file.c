@@ -79,7 +79,7 @@ static FILE *open_config_file(){
 /// @return pointer to config file in memory
 char *read_config_file(void){
     char config_file_path[PATH_MAX];
-    FILE *fp = open_config_file(config_file_path, sizeof config_file_path);
+    FILE *fp = open_config_file();
     
     if (!fp){
         fprintf(stderr, FATAL "Failed to open the config file from path %s\n", config_file_path);

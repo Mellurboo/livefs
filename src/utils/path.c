@@ -17,10 +17,11 @@ const char *get_current_exec_path(void){
     }
     buf[len] = '\0'; // null terminate
 
-    // strip off the filename to get the parent directory
+    // strip off the filename to get the parent directory and 
+    // truncate at the last '/'
     char *last_slash = strrchr(buf, '/');
     if (last_slash != NULL) {
-        *last_slash = '\0'; // truncate at the last '/'
+        *last_slash = '\0';
     }
 
     return buf;
@@ -43,4 +44,33 @@ const char *get_home_path(void){
     cached_home_path[sizeof(cached_home_path) - 1] = '\0';
 
     return cached_home_path;
+}
+
+/// @brief gets the parent of the direcotry or file provided
+/// @param path target
+/// @return child path
+char *get_parent_directory_path(const char *filepath){
+    if (filepath == NULL) return NULL;
+    char *path = strdup(filepath);
+    int path_length = strlen(path);
+
+    while (path_length > 1 && path[path_length - 1] == '/'){
+        path[path_length--] = '\0';
+    }
+
+    char *parent_slash = strrchr(path, '/');
+    if (parent_slash == NULL) return NULL;  // no parent?
+
+    if (parent_slash == path){
+        path[1] = '\0';
+        return path;
+    }
+
+    *parent_slash = '\0';
+
+    path_length = strlen(path);
+    path[path_length] = '/';
+    path[path_length + 1] = '\0';
+
+    return path;
 }
