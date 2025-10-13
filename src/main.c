@@ -9,7 +9,26 @@
 #include <stdio.h>
 #include <main.h>
 
-int server_socket = 0;
+/*
+    =======================================
+    This file is planned for a large reform
+    =======================================
+
+    I have neglected the use of arguments, one argument that I want
+    to implement is a config generate argument, that generates a config
+    file without starting the server, because right now as it stands the
+    config file generates, the port default is 8080, and then the server starts
+    with port 8080 being a standard port it may be unsafe. As a result. I am going to add
+    a cli argument such as './livefs --generate-config' that will simply 
+
+    another argument I have considered is an argument such as './livefs --path-add [PATH]'
+    this will simply generate a folder descriptor file on the path provided as the second argument
+    then exit.
+
+    Obviously I will want to have other standard arguments like '--help' ect...
+*/
+
+int server_socket = 0;      // I also want to move this i think having this in main.c is silly
 
 /// @brief this code executes when the server catches an exit signal
 void exitcall(void){
@@ -17,6 +36,10 @@ void exitcall(void){
     close(server_socket);
 }
 
+/// Program Entry point, initializes the server
+/// @param argc
+/// @param argv
+/// @return success?
 int main(int argc, const char *argv[]){
     int atexit_return = atexit(exitcall);
     if (atexit_return != 0) {printf(WARN "atexit was not set\n");}
@@ -37,7 +60,7 @@ int main(int argc, const char *argv[]){
 
     int srvport = config_get_int(config_file, "port");
     server_socket = server_create_socket(server_socket);
-
+    
     free(config_file);
 
     server_bind_socket(srvport, server_socket);
