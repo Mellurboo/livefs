@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <config/config_file.h>
+#include <config/read_key.h>
 #include <utils/path.h>
 
 /// @brief Finds and Isolates the key in the config file

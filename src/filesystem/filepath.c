@@ -5,10 +5,10 @@
 #include <main.h>
 #include <utils/terminal.h>
 #include <linux/limits.h>
-#include <config/config_file.h>
+#include <config/read_key.h>
 #include <utils/path.h>
 #include <unistd.h>
-#include <fs/filepath.h>
+#include <filesystem/filepath.h>
 #include <socket/request_arguement.h>
 
 /// @brief check if the path provided exsists

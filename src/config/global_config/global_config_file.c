@@ -3,9 +3,11 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
-#include <config/config_file.h>
-#include <config/create_config.h>
 #include <utils/path.h>
+#include <utils/trimws.h>
+
+#include <config/global_config/create_global_config.h>
+#include <config/global_config/config_file.h>
 
 /*
     =======================================

@@ -7,9 +7,6 @@
 #include <sys/socket.h>
 #include <linux/limits.h>
 #include <utils/terminal.h>
-#include <utils/trimws.h>
-#include <libgen.h>
-#include <stdlib.h>
 
 #define PATTERN_SIZE    128
 

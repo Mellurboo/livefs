@@ -1,10 +1,10 @@
 #define GT_IMPLEMENTATION
 
-#include <config/config_file.h>
+#include <config/global_config/config_file.h>
 #include <utils/exit_handler.h>
 #include <socket/socket.h>
 #include <vendor/gt/gt.h>
-#include <fs/filepath.h>
+#include <filesystem/filepath.h>
 #include <utils/path.h>
 #include <stdio.h>
 #include <main.h>

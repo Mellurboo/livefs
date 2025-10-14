@@ -1,6 +1,6 @@
 #pragma once
 #include <utils/terminal.h>
-#include <config/config_file.h>
+#include <config/read_key.h>
 #include <main.h>
 #include <stdio.h>
 #include <stdlib.h>

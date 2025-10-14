@@ -4,7 +4,7 @@
 #include <string.h>
 #include <limits.h>
 #include <utils/path.h>
-#include <fs/filepath.h>
+#include <filesystem/filepath.h>
 
 /// @brief Locates and Opens the descriptor file for the given path
 /// @param directory_path target path

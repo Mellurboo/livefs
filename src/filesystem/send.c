@@ -1,5 +1,5 @@
-#include <fs/send.h>
-#include <fs/filepath.h>
+#include <filesystem/send.h>
+#include <filesystem/filepath.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -8,7 +8,7 @@
 #include <libgen.h>
 #include <protocol/http.h>
 #include <socket/request_arguement.h>
-#include <fs/descriptors/descriptors.h>
+#include <config/descriptor/descriptors.h>
 
 #define BUFFER_SIZE 1024
 
