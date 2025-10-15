@@ -15,23 +15,24 @@ struct sockaddr_in get_server_sockaddr(){
 
 /// @brief Creates the Server Socket (socket() wrapper)
 /// @return 'int' server socket
-int server_create_socket(int server_socket){
+int server_create_socket() {
     int opt = 1;
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
-    
-    if (server_socket == -1){
-        fprintf(stderr, FATAL "Error in Creating Socket, Socket Return -1 %s:%d\n", __FILE__, __LINE__);
-        exit(-1);
-    }else{
-        if(setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (void*)&opt, sizeof(opt)) < 0) {
-            perror("setsockopt");
-            fprintf(stderr, FATAL "Could not set SO_REUSEADDR");
-            close(server_socket);
-            return 1;
-        }
+    int server_socket;
 
-        return server_socket;
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket == -1) {
+        fprintf(stderr, FATAL "Error creating socket: %s:%d\n", __FILE__, __LINE__);
+        exit(-1);
     }
+
+    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        perror("setsockopt");
+        fprintf(stderr, FATAL "Could not set SO_REUSEADDR\n");
+        close(server_socket);
+        exit(-1); // fail immediately
+    }
+
+    return server_socket;
 }
 
 /// @brief Binds the socket to a port and address, address is set to INADDR_ANY. handle cleanup if failed
