@@ -1,15 +1,5 @@
 #pragma once
 
-#include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <linux/limits.h>
-#include <utils/terminal.h>
-
-#define PATTERN_SIZE    128
-
 /// @brief gets the config file from disk
 /// @param working_path current working directory
 /// @return FILE config

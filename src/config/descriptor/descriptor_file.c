@@ -1,12 +1,12 @@
 #define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <utils/path.h>
 #include <filesystem/filepath.h>
+#include <utils/path.h>
 #include <filesystem/read_file.h>
-
 
 /// @brief Locates and Opens the descriptor file for the given path
 /// @param directory_path target path
@@ -20,11 +20,7 @@ static FILE *open_descriptor_file(const char* file_path) {
     printf("descriptor_file: %s\n", descriptor_file);
 
     FILE *fp = fopen(descriptor_file, "rb");
-    if (!fp) {
-        printf("Could not open descriptor file: %s\n", descriptor_file);
-        return NULL;
-    }
-
+    if (!fp) return NULL;
     return fp;
 }
 

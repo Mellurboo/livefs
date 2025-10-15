@@ -1,13 +1,15 @@
-#define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <main.h>
-#include <utils/terminal.h>
-#include <linux/limits.h>
-#include <config/read_key.h>
-#include <utils/path.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <utils/path.h>
+#include <linux/limits.h>
+#include <utils/terminal.h>
+#include <config/read_key.h>
 #include <filesystem/filepath.h>
 #include <socket/request_arguement.h>
 
@@ -26,7 +28,7 @@ int path_exists(const char *path) {
 const char *build_file_path(const char *filename) {
     const char *root_path = parse_config_root_path();
     if (!root_path || !*root_path) {
-        fprintf(stderr, "FATAL: Root Path was empty\n");
+        fprintf(stderr, FATAL "Root Path was empty\n");
         return "";
     }
 
@@ -51,7 +53,7 @@ const char *parse_config_root_path(void){
 
     const char *root_key = config_get_value(config_file, "root");
     if (!root_key){
-        fprintf(stderr, FATAL "No root key provided, or is unreadable.");
+        fprintf(stderr, FATAL "No root key provided, or is unreadable.\n");
         free(config_file);
         return NULL;
     }

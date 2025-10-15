@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
-#include <config/read_key.h>
+#include <utils/terminal.h>
 #include <utils/path.h>
+
+#define PATTERN_SIZE    128
 
 /// @brief Finds and Isolates the key in the config file
 /// @param pattern search pattern

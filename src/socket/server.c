@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <utils/terminal.h>
 #include <socket/socket.h>
 
 struct sockaddr_in server_addr;

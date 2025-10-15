@@ -1,5 +1,12 @@
-#include <filesystem/read_file.h>
+#include <stdio.h>
+#include <linux/limits.h>
+#include <utils/terminal.h>
+#include <utils/trimws.h>
+#include <utils/path.h>
+#include <stdlib.h>
 #include <filesystem/filepath.h>
+#include <filesystem/read_file.h>
+#include <config/global_config/create_global_config.h>
 
 /*
     =======================================
@@ -60,7 +67,7 @@ static char *get_config_file_dir() {
 
 /// @brief trims config file whitespace, realloc the buffer
 /// @return returns new pointer to config file
-char *get_config_file(void){
+char *get_config_file(){
     char *config_file = read_file(get_config_file_dir());
     if (!config_file) return NULL;
 

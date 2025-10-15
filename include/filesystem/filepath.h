@@ -1,7 +1,4 @@
 #pragma once
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 /// @brief Construct the file path from the config file and append a file name
 /// @param buf dest buffer
@@ -12,7 +9,7 @@ const char *build_file_path(const char *filename);
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
 /// @param filename target filename
-const char *parse_config_root_path(void);
+const char *parse_config_root_path();
 
 /// @brief gets the stripped name of a parent directory
 /// @param file_path target path

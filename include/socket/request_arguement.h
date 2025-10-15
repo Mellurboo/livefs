@@ -1,3 +1,5 @@
+#pragma once
+
 /// @brief checks if the argument exsists (automatically appends ?)
 /// @param request request line
 /// @param argument arguement key

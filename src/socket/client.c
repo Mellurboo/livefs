@@ -6,6 +6,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define BUFFER_SIZE     1024
+
 /// @brief Handles the client request and closing it when appropriate
 /// @param fd_void file descriptor
 void client_handler(void* fd_void) {

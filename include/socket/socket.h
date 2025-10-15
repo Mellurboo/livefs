@@ -1,17 +1,7 @@
 #pragma once
-#include <utils/terminal.h>
-#include <config/read_key.h>
-#include <main.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
-
-// probably dont use this for now because this server is so insecure it shouldnt know that prod exsists
-#define FALLBACK_SERVER_PORT    8080
 
 /// @brief returns the server socket address
 /// @return server socket address

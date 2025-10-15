@@ -1,16 +1,19 @@
 #include <stdio.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <utils/path.h>
-#include <config/global_config/config_file.h>
+#include <utils/terminal.h>
+#include <linux/limits.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <config/global_config/global_config_file.h>
 #include <config/global_config/create_global_config.h>
 
 /// @brief Creates .config/livefs file if it doesn't exsist
 /// @return success?
-int create_config_directory(void){
+int create_config_directory(){
     const char *home_path = get_home_path();
     if (!home_path){
         fprintf(stderr, FATAL "failure to determine home path");
