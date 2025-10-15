@@ -2,6 +2,7 @@
 #include <socket/socket.h>
 #include <vendor/gt/gt.h>
 #include <filesystem/send.h>
+#include <utils/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -11,6 +12,8 @@
 /// @brief Handles the client request and closing it when appropriate
 /// @param fd_void file descriptor
 void client_handler(void* fd_void) {
+    printf("\n%sRequest Start %s", INFO, get_current_server_time());
+
     char request[BUFFER_SIZE] = {0};
     int client_socket = (uintptr_t)fd_void;
     

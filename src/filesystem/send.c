@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <libgen.h>
 #include <sys/stat.h>
+#include <utils/time.h>
 #include <sys/socket.h>
 #include <linux/limits.h>
 #include <protocol/http.h>
@@ -67,7 +68,7 @@ void send_file(int client_sock, const char *request_line) {
 
     FILE *fp = fopen(full_path, "rb");
     if (!fp) {
-        perror("fopen");
+        printf(REQUEST "Failure to open file %s it probably doesnt exsist\n", full_path);
         const char *not_found = http_not_found_header();
         send(client_sock, not_found, strlen(not_found), 0);
         close(client_sock);
