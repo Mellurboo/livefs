@@ -9,8 +9,9 @@
 /// @brief Handles the client request and closing it when appropriate
 /// @param fd_void file descriptor
 void client_handler(void* fd_void) {
+    char request[BUFFER_SIZE] = {0};
     int client_socket = (uintptr_t)fd_void;
-    char request[BUFFER_SIZE];
+    
     gtblockfd(client_socket, GTBLOCKIN);
     int n = recv(client_socket, request, BUFFER_SIZE - 1, 0);
     if (n > 0) {

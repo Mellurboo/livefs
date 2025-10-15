@@ -14,13 +14,9 @@
 /// @brief check if the path provided exsists
 /// @param path target
 /// @return success or exit
-int path_exsists(const char *path){
+int path_exists(const char *path) {
     struct stat st;
-    if (stat(path, &st) == -1 || !S_ISDIR(st.st_mode)) {
-        fprintf(stderr, "%s root path does not exist: %s\n", FATAL, path);
-        exit(-1);
-    }
-    return 0;
+    return stat(path, &st) == 0; // returns 1 if exists, 0 if not
 }
 
 /// @brief Construct the file path from the config file and append a file name

@@ -54,7 +54,7 @@ int main(int argc, const char *argv[]){
     printf(INFO "Registered Config File\n");
 
     const char *root_path = parse_config_root_path();
-    path_exsists(root_path);
+    path_exists(root_path);
 
     gtinit();
 

@@ -22,4 +22,4 @@ const char *get_file_directory_name(const char *file_path);
 /// @brief check if the path provided exsists
 /// @param path target
 /// @return success or exit
-int path_exsists(const char *path);
+int path_exists(const char *path);

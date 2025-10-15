@@ -63,6 +63,9 @@ $(ELF_OBJ_DIR_64)/%.gcc.o: src/%.c
 run: $(ELF_TARGET_64)
 	@./$(ELF_BIN_DIR_64)/$(ELF_TARGET_64) $(RUN_ARGS)
 
+profile: $(ELF_TARGET_64)
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes $(ELF_BIN_DIR_64)/$(ELF_TARGET_64)
+
 #
 # Clean
 #
@@ -70,4 +73,4 @@ clean:
 	rm -rf bin
 	rm -rf .vscode
 
-.PHONY: all clean run debug
+.PHONY: all clean run profile

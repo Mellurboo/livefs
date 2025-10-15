@@ -16,7 +16,9 @@
 /// @param client_sock client socket
 /// @param request_line full HTTP request
 void send_file(int client_sock, const char *request_line) {
-    char method[8], path[256], version[16];
+    char method[8] = {0};
+    char path[256] = {0};
+    char version[16] = {0};
 
     // Parse the first line: method, path, version
     if (sscanf(request_line, "%7s %255s %15s", method, path, version) != 3) {
@@ -50,12 +52,15 @@ void send_file(int client_sock, const char *request_line) {
 
     printf(REQUEST "opening file '%s'\n", full_path);
 
-    if (!read_descriptor_file(full_path)){
+    char *descriptor_file = read_descriptor_file(full_path);
+
+    if (!descriptor_file){
         const char *not_found = http_not_found_header();
         send(client_sock, not_found, strlen(not_found), 0);
         close(client_sock);
         return;
     }
+    free(descriptor_file);
 
     FILE *fp = fopen(full_path, "rb");
     if (!fp) {
