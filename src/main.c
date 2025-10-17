@@ -1,5 +1,6 @@
 #define GT_IMPLEMENTATION
 
+#include <main.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <utils/path.h>
@@ -30,12 +31,16 @@
     Obviously I will want to have other standard arguments like '--help' ect...
 */
 
-int server_socket = 0;      // I also want to move this i think having this in main.c is silly
-
 /// @brief this code executes when the server catches an exit signal
 void exitcall(void){
     printf(INFO "livefs has closed\n");
-    close(server_socket);
+    close(get_server_socket());
+}
+
+/// Gets the server socket
+int get_server_socket(){
+    static int server_socket = 0;
+    return server_socket;
 }
 
 /// Program Entry point, initializes the server
@@ -43,6 +48,7 @@ void exitcall(void){
 /// @param argv
 /// @return success?
 int main(int argc, const char *argv[]){
+    int server_socket = get_server_socket();
     int atexit_return = atexit(exitcall);
     if (atexit_return != 0) {printf(WARN "atexit was not set\n");}
     exit_handlers();
@@ -60,7 +66,7 @@ int main(int argc, const char *argv[]){
 
     gtinit();
 
-    int srvport = config_get_int(config_file, "port");
+    int srvport = file_get_int(config_file, "port");
     server_socket = server_create_socket();
     
     free(config_file);

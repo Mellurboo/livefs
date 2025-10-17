@@ -56,9 +56,8 @@ void send_file(int client_sock, const char *request_line) {
 
     printf(REQUEST "opening file '%s'\n", full_path);
 
-    char *descriptor_file = read_descriptor_file(full_path);
-
-    if (!descriptor_file){
+    descriptor_t *descriptor_file = read_descriptor_file(full_path);
+    if (!descriptor_file || descriptor_file->hidden == 1){
         const char *not_found = http_not_found_header();
         send(client_sock, not_found, strlen(not_found), 0);
         close(client_sock);

@@ -12,6 +12,7 @@
 #include <config/read_key.h>
 #include <filesystem/filepath.h>
 #include <socket/request_arguement.h>
+#include <config/global_config/global_config_file.h>
 
 /// @brief check if the path provided exsists
 /// @param path target
@@ -51,7 +52,7 @@ const char *build_file_path(const char *filename) {
 const char *parse_config_root_path(void){
     char *config_file = get_config_file();
 
-    const char *root_key = config_get_value(config_file, "root");
+    const char *root_key = get_key_value(config_file, "root");
     if (!root_key){
         fprintf(stderr, FATAL "No root key provided, or is unreadable.\n");
         free(config_file);

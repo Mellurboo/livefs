@@ -33,9 +33,10 @@ char *get_key_in_file(char *pattern, const char *config_file, const char *key){
 /// @param file target file
 /// @param key key name str
 /// @return value of key if found
-int file_get_int(const char *config_file, const char *key){
+int file_get_int(const char *file, const char *key){
     char pattern[PATTERN_SIZE];
-    char *pos = get_key_in_file(pattern, config_file, key);
+    char *pos = get_key_in_file(pattern, file, key);
+    if (!pos) return 0;
 
     // extract the value
     pos += strlen(pattern);
@@ -44,9 +45,8 @@ int file_get_int(const char *config_file, const char *key){
 
     if (pos == endptr) {
         fprintf(stderr, ERROR "Invalid integer for key %s\n", key);
-        return -1;
+        return 0;
     }
-
     return (int)value;
 }
 
@@ -54,9 +54,9 @@ int file_get_int(const char *config_file, const char *key){
 /// @param config_file config file context
 /// @param key name
 /// @return value of key
-char *config_get_value(const char *config_file, const char *key){
+char *get_key_value(const char *file, const char *key){
     char pattern[PATTERN_SIZE];
-    char *pos = get_key_in_file(pattern, config_file, key);
+    char *pos = get_key_in_file(pattern, file, key);
 
     pos += strlen(pattern);
     return pos;

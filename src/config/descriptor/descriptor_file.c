@@ -7,6 +7,8 @@
 #include <filesystem/filepath.h>
 #include <utils/path.h>
 #include <filesystem/read_file.h>
+#include <config/read_key.h>
+#include <config/descriptor/descriptor_file.h>
 
 /// @brief Locates and Opens the descriptor file for the given path
 /// @param directory_path target path
@@ -27,7 +29,7 @@ static FILE *open_descriptor_file(const char* file_path) {
 /// @brief builds a path for the descriptor file and returns the file
 /// @param file_path target directory
 /// @return pointer to file
-char *read_descriptor_file(const char* file_path){
+descriptor_t *read_descriptor_file(const char* file_path){
     if (!file_path) return NULL;
     const char *dir_name = get_file_directory_name(file_path);
     char *dir_path = get_parent_directory_path(strdup(file_path));
@@ -35,7 +37,20 @@ char *read_descriptor_file(const char* file_path){
 
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s%s.cfg", dir_path, dir_name);
+    
+    char *descriptor_file = read_file(path);
+    if (!descriptor_file){
+        free(dir_path);
+        return NULL;
+    }
 
-    free(dir_path);
-    return read_file(path);
+    descriptor_t *descriptor = calloc(1, sizeof(descriptor_t));
+    if (!descriptor){
+        free(descriptor_file);
+        return NULL;
+    }
+
+    descriptor->hidden = file_get_int(descriptor_file, "hidden");
+    
+    return descriptor;
 }

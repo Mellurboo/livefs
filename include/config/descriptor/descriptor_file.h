@@ -1,6 +1,10 @@
 #pragma once
 
+typedef struct descriptor{
+    int hidden;
+}descriptor_t;
+
 /// @brief builds a path for the descriptor file and returns the file
 /// @param file_path target directory
 /// @return pointer to file
-char *read_descriptor_file(const char* file_path);
+descriptor_t *read_descriptor_file(const char* file_path);
