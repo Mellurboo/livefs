@@ -1,0 +1,1 @@
+void serve_webpage(int client_socket, const char *page_path);
