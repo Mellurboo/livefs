@@ -51,6 +51,7 @@ descriptor_t *read_descriptor_file(const char* file_path){
     }
 
     descriptor->hidden = file_get_int(descriptor_file, "hidden");
+    descriptor->page = file_get_key(descriptor_file, "page");
     
     return descriptor;
 }

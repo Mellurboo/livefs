@@ -2,6 +2,7 @@
 
 typedef struct descriptor{
     int hidden;
+    char *page;
 }descriptor_t;
 
 /// @brief builds a path for the descriptor file and returns the file

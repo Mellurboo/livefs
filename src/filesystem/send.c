@@ -13,54 +13,58 @@
 #include <filesystem/filepath.h>
 #include <socket/request_arguement.h>
 #include <config/descriptor/descriptor_file.h>
+#include <config/global_config/global_config_file.h>
 
 #define BUFFER_SIZE 1024
+
+request_t *parse_request_structure(int client_socket, const char *request_line){
+    request_t *request = calloc(1, sizeof(request_t));
+
+    // Parse the first line: method, path, version
+    if (sscanf(request_line, "%7s %255s %15s", request->method, request->path, request->version) != 3) {
+        printf(INFO "Failed to parse request_line='%s'\n", request_line);
+        const char *bad_request = http_bad_request_header();
+        send(client_socket, bad_request, strlen(bad_request), 0);
+        close(client_socket);
+        return NULL;
+    }
+
+    return request;
+}
 
 /// @brief serve the client with the file
 /// @param client_sock client socket
 /// @param request_line full HTTP request
-void send_file(int client_sock, const char *request_line) {
-    char method[8] = {0};
-    char path[256] = {0};
-    char version[16] = {0};
+void send_file(int client_socket, const char *request_line) {
+    request_t *request = parse_request_structure(client_socket, request_line);
 
-    // Parse the first line: method, path, version
-    if (sscanf(request_line, "%7s %255s %15s", method, path, version) != 3) {
-        printf(INFO "Failed to parse request_line='%s'\n", request_line);
-        const char *bad_request = http_bad_request_header();
-        send(client_sock, bad_request, strlen(bad_request), 0);
-        close(client_sock);
-        return;
-    }
-
-    printf(REQUEST "method='%s', path='%s', version='%s'\n", method, path, version);
-
-    if (strcmp(method, "GET") != 0) {
+    if (strcmp(request->method, "GET") != 0) {
         const char *not_allowed = http_method_not_allowed();
-        send(client_sock, not_allowed, strlen(not_allowed), 0);
-        close(client_sock);
+        send(client_socket, not_allowed, strlen(not_allowed), 0);
+        close(client_socket);
         return;
     }
 
     // Block unsafe paths: '..' or '~'
-    if (strstr(path, "..") || strchr(path, '~')) {
+    if (strstr(request->path, "..") || strchr(request->path, '~')) {
         const char *forbidden = http_forbidden();
-        send(client_sock, forbidden, strlen(forbidden), 0);
-        close(client_sock);
+        send(client_socket, forbidden, strlen(forbidden), 0);
+        close(client_socket);
         return;
     }
 
     char full_path[PATH_MAX];
-    strncpy(full_path, build_file_path(path), sizeof(full_path) - 1);
+    strncpy(full_path, build_file_path(request->path), sizeof(full_path) - 1);
     full_path[sizeof(full_path) - 1] = '\0';
 
     printf(REQUEST "opening file '%s'\n", full_path);
 
     descriptor_t *descriptor_file = read_descriptor_file(full_path);
+
     if (!descriptor_file || descriptor_file->hidden == 1){
         const char *not_found = http_not_found_header();
-        send(client_sock, not_found, strlen(not_found), 0);
-        close(client_sock);
+        send(client_socket, not_found, strlen(not_found), 0);
+        close(client_socket);
         return;
     }
     free(descriptor_file);
@@ -69,8 +73,8 @@ void send_file(int client_sock, const char *request_line) {
     if (!fp) {
         printf(REQUEST "Failure to open file %s it probably doesnt exsist\n", full_path);
         const char *not_found = http_not_found_header();
-        send(client_sock, not_found, strlen(not_found), 0);
-        close(client_sock);
+        send(client_socket, not_found, strlen(not_found), 0);
+        close(client_socket);
         return;
     }
 
@@ -81,17 +85,17 @@ void send_file(int client_sock, const char *request_line) {
     stat(full_path, &fileinfo);
     char *fname = basename(full_path);
 
-    const char *success_header = http_success(fname, fileinfo.st_size, request_has_arguement(path, "download"));
-    send(client_sock, success_header, strlen(success_header), 0);
+    const char *success_header = http_success(fname, fileinfo.st_size, request_has_arguement(request->path, "download"));
+    send(client_socket, success_header, strlen(success_header), 0);
 
     // Send file to the client, this is unencrypted and insecure
     char buffer[BUFFER_SIZE];
     size_t fbytes;
     while ((fbytes = fread(buffer, 1, BUFFER_SIZE, fp)) > 0) {
-        send(client_sock, buffer, fbytes, 0);
+        send(client_socket, buffer, fbytes, 0);
     }
 
     // clean up the connection, we can close it now!
     fclose(fp);
-    close(client_sock);
+    close(client_socket);
 }
