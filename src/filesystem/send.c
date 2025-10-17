@@ -19,10 +19,13 @@
 
 request_t *parse_request_structure(int client_socket, const char *request_line){
     request_t *request = calloc(1, sizeof(request_t));
-
+    if (!request){
+        printf(FATAL "Error allocating memory for request structure\n");
+        exit(-1);
+    }
     // Parse the first line: method, path, version
     if (sscanf(request_line, "%7s %255s %15s", request->method, request->path, request->version) != 3) {
-        printf(INFO "Failed to parse request_line='%s'\n", request_line);
+        printf(ERROR "Failed to parse request_line='%s'\n", request_line);
         const char *bad_request = http_bad_request_header();
         send(client_socket, bad_request, strlen(bad_request), 0);
         close(client_socket);
@@ -32,46 +35,64 @@ request_t *parse_request_structure(int client_socket, const char *request_line){
     return request;
 }
 
-/// @brief serve the client with the file
-/// @param client_sock client socket
-/// @param request_line full HTTP request
-void send_file(int client_socket, const char *request_line) {
-    request_t *request = parse_request_structure(client_socket, request_line);
-
+int validate_request(int client_socket, request_t *request){
+    // only allow get
     if (strcmp(request->method, "GET") != 0) {
         const char *not_allowed = http_method_not_allowed();
+        printf(BADRESPONSE "Method Disallowed\n");
         send(client_socket, not_allowed, strlen(not_allowed), 0);
         close(client_socket);
-        return;
+        return 0;
     }
 
     // Block unsafe paths: '..' or '~'
     if (strstr(request->path, "..") || strchr(request->path, '~')) {
         const char *forbidden = http_forbidden();
+        printf(BADRESPONSE "Path Forbidden\n");
         send(client_socket, forbidden, strlen(forbidden), 0);
         close(client_socket);
-        return;
+        return 0;
     }
+    return 1;   // all good
+}
 
-    char full_path[PATH_MAX];
-    strncpy(full_path, build_file_path(request->path), sizeof(full_path) - 1);
-    full_path[sizeof(full_path) - 1] = '\0';
-
-    printf(REQUEST "opening file '%s'\n", full_path);
-
+int interpret_descriptor(int client_socket, const char *full_path){
     descriptor_t *descriptor_file = read_descriptor_file(full_path);
 
     if (!descriptor_file || descriptor_file->hidden == 1){
         const char *not_found = http_not_found_header();
         send(client_socket, not_found, strlen(not_found), 0);
         close(client_socket);
-        return;
+        return 0;
     }
+
     free(descriptor_file);
+    return 1;
+}
+
+/// @brief serve the client with the file
+/// @param client_sock client socket
+/// @param request_line full HTTP request
+void send_file(int client_socket, const char *request_line) {
+    request_t *request = parse_request_structure(client_socket, request_line);
+    if (!validate_request(client_socket, request)){
+        free(request);
+        return;     // invalid request    
+    }
+
+    char full_path[PATH_MAX];
+    strncpy(full_path, build_file_path(request->path), sizeof(full_path) - 1);
+    full_path[sizeof(full_path) - 1] = '\0';
+
+    printf(REQUEST "Opening File '%s'\n", full_path);
+    if (!interpret_descriptor(client_socket, full_path)){
+        free(request);
+        return; // disallowed descriptor or doesnt exsist
+    }
 
     FILE *fp = fopen(full_path, "rb");
     if (!fp) {
-        printf(REQUEST "Failure to open file %s it probably doesnt exsist\n", full_path);
+        printf(BADRESPONSE "Failure to open file %s it probably doesnt exsist\n", full_path);
         const char *not_found = http_not_found_header();
         send(client_socket, not_found, strlen(not_found), 0);
         close(client_socket);
