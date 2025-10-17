@@ -60,7 +60,7 @@ int main(int argc, const char *argv[]){
 
     gtinit();
 
-    int srvport = file_get_int(config_file, "port");
+    int srvport = config_get_int(config_file, "port");
     server_socket = server_create_socket();
     
     free(config_file);
