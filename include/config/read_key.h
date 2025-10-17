@@ -1,18 +1,13 @@
 #pragma once
 
-/// @brief gets the config file from disk
-/// @param working_path current working directory
-/// @return FILE config
-char *get_config_file();
+/// @brief gets the value of a key
+/// @param file target file
+/// @param key key name str
+/// @return key value
+char *get_key_in_file(const char *file, const char *key);
 
-/// @brief Gets the value related to a key from the configuration file
-/// @param config_file config file context
-/// @param key key to retrieve
-/// @return int value of key
-int config_get_int(const char *config_file, const char *key);
-
-/// @brief gets the value of any non number key
-/// @param config_file config file context
-/// @param key name
-/// @return value of key
-char *config_get_value(const char *config_file, const char *key);
+/// @brief gets the integer value of a file passed
+/// @param file target file
+/// @param key key name str
+/// @return value of key if found
+int file_get_int(const char *file, const char *key);

@@ -6,12 +6,12 @@
 
 #define PATTERN_SIZE    128
 
-/// @brief Finds and Isolates the key in the config file
-/// @param pattern search pattern
-/// @param config_file config file context
-/// @param key key name
-/// @return key in the config file
-char *find_key_in_config(char *pattern, const char *config_file, const char *key){
+
+/// @brief gets the value of a key
+/// @param file target file
+/// @param key key name str
+/// @return key value
+char *get_key_in_file(char *pattern, const char *config_file, const char *key){
     /*
         Here we define the formatting must be
         key = value
@@ -29,13 +29,13 @@ char *find_key_in_config(char *pattern, const char *config_file, const char *key
     return pos;
 }
 
-/// @brief Gets the value related to a key from the configuration file
-/// @param config_file config file context
-/// @param key key to retrieve
-/// @return int value of key
-int config_get_int(const char *config_file, const char *key){
+/// @brief gets the integer value of a file passed
+/// @param file target file
+/// @param key key name str
+/// @return value of key if found
+int file_get_int(const char *config_file, const char *key){
     char pattern[PATTERN_SIZE];
-    char *pos = find_key_in_config(pattern, config_file, key);
+    char *pos = get_key_in_file(pattern, config_file, key);
 
     // extract the value
     pos += strlen(pattern);
@@ -56,7 +56,7 @@ int config_get_int(const char *config_file, const char *key){
 /// @return value of key
 char *config_get_value(const char *config_file, const char *key){
     char pattern[PATTERN_SIZE];
-    char *pos = find_key_in_config(pattern, config_file, key);
+    char *pos = get_key_in_file(pattern, config_file, key);
 
     pos += strlen(pattern);
     return pos;
