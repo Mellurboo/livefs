@@ -37,7 +37,7 @@ descriptor_t *read_descriptor_file(const char* file_path){
 
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s%s.cfg", dir_path, dir_name);
-    
+
     char *descriptor_file = read_file(path);
     if (!descriptor_file){
         free(dir_path);
@@ -51,6 +51,7 @@ descriptor_t *read_descriptor_file(const char* file_path){
     }
 
     descriptor->hidden = file_get_int(descriptor_file, "hidden");
-    
+    descriptor->page = file_get_value(descriptor_file, "page");
+
     return descriptor;
 }
