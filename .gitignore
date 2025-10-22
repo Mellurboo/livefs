@@ -1,2 +1,4 @@
 .vscode/
+.cache/
+compile_commands.json
 bin/

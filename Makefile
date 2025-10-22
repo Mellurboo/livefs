@@ -38,6 +38,11 @@ ELF_OBJ_DIR_64 = $(ELF_BIN_DIR_64)/obj
 SRCS = $(shell find src -name '*.c')
 
 #
+# Check if bear is installed, for if the user tries to generate compile_commands
+#
+BEAR_INSTALLED := $(shell which bear 2>/dev/null)
+
+#
 # Object files per arch
 #
 ELF_OBJS_64 = $(patsubst src/%.c, $(ELF_OBJ_DIR_64)/%.gcc.o, $(SRCS))
@@ -66,6 +71,13 @@ run: $(ELF_TARGET_64)
 profile: $(ELF_TARGET_64)
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes $(ELF_BIN_DIR_64)/$(ELF_TARGET_64)
 
+bear:
+ifeq ($(BEAR_INSTALLED),)
+	@echo "Bear is not installed. Please install it: sudo apt install bear"
+else
+	@echo "Generating compile_commands.json..."
+	@bear -- make clean all
+endif
 #
 # Clean
 #
