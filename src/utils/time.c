@@ -4,7 +4,7 @@
 
 /// @brief gets the current time of the server
 /// @return time string
-const char *get_current_server_time(){
+const char *get_current_server_time(void){
     time_t current_time = time(NULL);
     if (current_time == -1) {
         fprintf(stderr, ERROR "Failure to get server time");

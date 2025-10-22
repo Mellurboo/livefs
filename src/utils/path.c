@@ -17,7 +17,7 @@ const char *get_current_exec_path(void){
     }
     buf[len] = '\0'; // null terminate
 
-    // strip off the filename to get the parent directory and 
+    // strip off the filename to get the parent directory and
     // truncate at the last '/'
     char *last_slash = strrchr(buf, '/');
     if (last_slash != NULL) {

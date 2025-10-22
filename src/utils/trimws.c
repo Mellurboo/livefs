@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -9,8 +8,8 @@ char *trim_whitespaces(char *str){
     char *end;
 
     while (isspace((unsigned char)*str)) str++; // remove leading
-    if (*str == 0){ return str; }   // if the string is now empty, just return str.
-    end = str+strlen(str) - 1;      // remove trailing
+    if (*str == 0){ return str; }               // if the string is now empty, just return str.
+    end = str+strlen(str) - 1;                  // remove trailing
     while (end > str && isspace((unsigned char) *end)) end--;
 
     // replace the null term

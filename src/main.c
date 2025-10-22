@@ -22,7 +22,7 @@
     file without starting the server, because right now as it stands the
     config file generates, the port default is 8080, and then the server starts
     with port 8080 being a standard port it may be unsafe. As a result. I am going to add
-    a cli argument such as './livefs --generate-config' that will simply 
+    a cli argument such as './livefs --generate-config' that will simply
 
     another argument I have considered is an argument such as './livefs --path-add [PATH]'
     this will simply generate a folder descriptor file on the path provided as the second argument
@@ -38,7 +38,7 @@ void exitcall(void){
 }
 
 /// Gets the server socket
-int get_server_socket(){
+int get_server_socket(void){
     static int server_socket = 0;
     return server_socket;
 }
@@ -68,7 +68,7 @@ int main(int argc, const char *argv[]){
 
     int srvport = file_get_int(config_file, "port");
     server_socket = server_create_socket();
-    
+
     free(config_file);
 
     server_bind_socket(srvport, server_socket);

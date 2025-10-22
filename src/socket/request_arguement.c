@@ -11,7 +11,7 @@ int request_has_arguement(const char *request, const char *argument){
     if (!request || !argument) return 0;
     char search_request[PATH_MAX];
     snprintf(search_request, sizeof(search_request), "?%s", argument);
-    
+
     return strstr(request, search_request) != NULL;
 }
 

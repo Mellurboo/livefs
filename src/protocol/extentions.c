@@ -23,14 +23,17 @@ const char *get_content_type(const char *filename){
     const char *extention = strrchr(filename, '.');
     if (!extention) return "application/octet-stream";
 
-    size_t extention_len = strlen(extention);
+    char clean_extention[16] = {0};
+    size_t i = 0;
 
-    // woah spagetti, loop over the content types, check length and then compare the full extention
-    for (size_t i = 0; i < sizeof(content_types)/sizeof(content_types[0]); i++){
-        if (extention_len == content_types[i].extention_length && extention[0] == content_types[i].extention[0]){
-            if (memcmp(extention, content_types[i].extention, extention_len) == 0){
-                return content_types[i].content_type;
-            }
+    while (extention[i] && i < sizeof(clean_extention) - 1 && extention[i] != '\r' && extention[i] != '\n' && extention[i] != ' '){
+        clean_extention[i] = extention[i];
+        i++;
+    }
+
+    for (size_t j = 0; j < sizeof(content_types)/sizeof(content_types[0]); j++){
+        if (strcmp(clean_extention, content_types[j].extention) == 0){
+            return content_types[j].content_type;
         }
     }
 

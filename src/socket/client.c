@@ -25,9 +25,10 @@ void client_handler(void* fd_void) {
         if (first_line) {
             printf(REQUEST "First Line = '%s'\n", first_line);
             gtblockfd(client_socket, GTBLOCKOUT);
-            send_file(client_socket, first_line);
+            send_file_request(client_socket, first_line);
         }
     }
+    
     close(client_socket);
 }
 

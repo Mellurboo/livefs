@@ -9,13 +9,13 @@ struct sockaddr_in server_addr;
 
 /// @brief returns the server socket address
 /// @return server socket address
-struct sockaddr_in get_server_sockaddr(){
+struct sockaddr_in get_server_sockaddr(void){
     return server_addr;
 }
 
 /// @brief Creates the Server Socket (socket() wrapper)
 /// @return 'int' server socket
-int server_create_socket() {
+int server_create_socket(void) {
     int opt = 1;
     int server_socket;
 
