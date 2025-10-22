@@ -37,7 +37,7 @@ const char *build_file_path(const char *filename) {
     if (filename[0] == '/') filename++;   // Skip leading '/'
 
     static char full_path[PATH_MAX];
-    
+
     if (strcmp(filename, "") == 0) {     // serve default index.html
         snprintf(full_path, sizeof(full_path), "%sindex.html", root_path);
     } else {
@@ -52,7 +52,7 @@ const char *build_file_path(const char *filename) {
 const char *parse_config_root_path(void){
     char *config_file = get_config_file();
 
-    const char *root_key = file_get_key(config_file, "root");
+    const char *root_key = file_get_value(config_file, "root");
     if (!root_key){
         fprintf(stderr, FATAL "No root key provided, or is unreadable.\n");
         free(config_file);
