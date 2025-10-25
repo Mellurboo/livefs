@@ -11,6 +11,8 @@
 #include <utils/terminal.h>
 #include <filesystem/send.h>
 #include <filesystem/filepath.h>
+#include <utils/path.h>
+#include <filesystem/read_file.h>
 #include <socket/request_arguement.h>
 #include <config/descriptor/descriptor_file.h>
 #include <config/global_config/global_config_file.h>
@@ -69,23 +71,6 @@ descriptor_t *interpret_descriptor(int client_socket, const char *full_path){
     return descriptor_file;
 }
 
-FILE *open_file(int client_socket, const char *filepath){
-    char full_path[PATH_MAX] = {0};
-    strncpy(full_path, build_file_path(filepath), sizeof(full_path) - 1);
-    full_path[sizeof(full_path) - 1] = '\0';
-
-    FILE *fp = fopen(full_path, "rb");
-    if (!fp) {
-        printf(BADRESPONSE "Failure to open file %s it probably doesnt exsist\n", full_path);
-        const char *not_found = http_not_found_header();
-        send(client_socket, not_found, strlen(not_found), 0);
-        close(client_socket);
-        return NULL;
-    }
-
-    return fp;
-}
-
 /// @brief serve the client with the file
 /// @param client_sock client socket
 /// @param request_line full HTTP request
@@ -112,24 +97,33 @@ void send_file_request(int client_socket, const char *request_line) {
     stat(full_path, &fileinfo);
     char *fname = basename(full_path);
 
-    FILE *fp = open_file(client_socket, request->path);
-    if (!fp) {
-        free(request);
-        return;
+    if (is_directory(full_path) == 0){
+        FILE *fp = open_file(full_path);
+        if (!fp) {
+            printf(BADRESPONSE "Failure to open file %s it probably doesnt exsist\n", full_path);
+            const char *not_found = http_not_found_header();
+            send(client_socket, not_found, strlen(not_found), 0);
+            close(client_socket);
+            free(request);
+            return;
+        }
+
+        const char *success_header = http_success(fname, fileinfo.st_size, request_has_arguement(request->path, "download"));
+        send(client_socket, success_header, strlen(success_header), 0);
+
+        // Send file to the client, this is unencrypted and insecure
+        
+        size_t fbytes;
+        while ((fbytes = fread(buffer, 1, BUFFER_SIZE, fp)) > 0) {
+            send(client_socket, buffer, fbytes, 0);
+        }
+        printf(SUCREQUEST "Sent %s to client\n", full_path);
+        fclose(fp);
+    }else{
+        
     }
 
-    const char *success_header = http_success(fname, fileinfo.st_size, request_has_arguement(request->path, "download"));
-    send(client_socket, success_header, strlen(success_header), 0);
-
-    // Send file to the client, this is unencrypted and insecure
-    
-    size_t fbytes;
-    while ((fbytes = fread(buffer, 1, BUFFER_SIZE, fp)) > 0) {
-        send(client_socket, buffer, fbytes, 0);
-    }
-    printf(SUCREQUEST "Sent %s to client\n", full_path);
+    free(request);
     free(descriptor);
-
-    // clean up the connection, we can close it now!
-    fclose(fp);
+    return;
 }

@@ -3,33 +3,44 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
+#include <filesystem/read_file.h>
+#include <sys/types.h>
 #include <utils/path.h>
 #include <utils/trimws.h>
 #include <utils/terminal.h>
 #include <config/global_config/create_global_config.h>
 #include <config/global_config/global_config_file.h>
 
-/// @brief Reads the file and places it in memory, Must be freed by the caller
-/// @param directory_path 
-/// @return 
-char *read_file(const char* directory_path){
-    if (!directory_path) return NULL;
+ssize_t get_filesize(FILE *fp){
+    if (fseek(fp, 0, SEEK_END) != 0){
+        fprintf(stderr, ERROR "failure to seek along file\n");
+        fclose(fp);
+        return -1;
+    }
 
+    size_t filesize = (size_t)ftell(fp);
+    rewind(fp);
+    return filesize;
+}
+
+FILE *open_file(const char* directory_path){
+    if (!directory_path) return NULL;
+    printf("%s\n", directory_path);
     FILE *fp = fopen(directory_path, "rb");
     if (!fp){
         fprintf(stderr, ERROR "Failure to open file: %s\n", directory_path);
         return NULL;
     }
 
-    if (fseek(fp, 0, SEEK_END) != 0){
-        fprintf(stderr, ERROR "failure to seek along file %s\n", directory_path);
-        fclose(fp);
-        return NULL;
-    }
+    return fp;
+}
 
-    size_t filesize = (size_t)ftell(fp);
-    rewind(fp);
-
+/// @brief Reads the file and places it in memory, Must be freed by the caller
+/// @param directory_path 
+/// @return 
+char *read_file(FILE *fp){
+    if (!fp) return NULL;
+    size_t filesize = get_filesize(fp);
     char *file = malloc(filesize + 1);
     if (!file){
         fprintf(stderr, ERROR "Failure to allocate %zu bytes for file, out of memory?\n", filesize);

@@ -83,7 +83,6 @@ int is_directory(const char *path){
     struct stat path_stat;
 
     if (stat(path, &path_stat) != 0){
-        fprintf(stderr, ERROR "Failure to stat path %s\n", path);
         return -1;
     }
 

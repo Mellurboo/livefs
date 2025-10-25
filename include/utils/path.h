@@ -12,3 +12,8 @@ const char *get_home_path(void);
 /// @param path target
 /// @return child path
 char *get_parent_directory_path(const char *filepath);
+
+/// @brief Takes a path and stats it to see if it is a dir.
+/// @param path target
+/// @return 1 = dir, 0 = file, -1 = errornous
+int is_directory(const char *path);

@@ -68,7 +68,7 @@ static char *get_config_file_dir() {
 /// @brief trims config file whitespace, realloc the buffer
 /// @return returns new pointer to config file
 char *get_config_file(){
-    char *config_file = read_file(get_config_file_dir());
+    char *config_file = (read_file(open_file(get_config_file_dir())));
     if (!config_file) return NULL;
 
     char *trimmed_config = trim_whitespaces(config_file);
