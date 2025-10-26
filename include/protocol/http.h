@@ -16,19 +16,22 @@ typedef struct {
 const char *get_content_type(const char *filename);
 
 /// @return HTTP bad request header
-const char *http_bad_request_header();
+void http_bad_request_header(int client_socket);
 
 /// @return HTTP 403 not found header
-const char *http_forbidden();
+void http_forbidden(int client_socket);
+
+/// @return HTTP 500 internal server error
+void http_internal_server_error(int client_socket);
 
 /// @return HTTP 405 method not allowed header
-const char *http_method_not_allowed();
+void http_method_not_allowed(int client_socket);
 
 /// @return HTTP 404 not found header
-const char *http_not_found_header();
+void http_not_found_header(int client_socket);
 
 /// @return HTTP 418 :)
-const char *http_im_a_teapot();
+void http_im_a_teapot(int client_socket);
 
 /// @return Place HTTP 200 in Buffer Provided
 const char *http_success(const char *fname, off_t content_size, int force_download);

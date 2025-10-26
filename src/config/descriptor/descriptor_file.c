@@ -5,6 +5,7 @@
 #include <string.h>
 #include <limits.h>
 #include <filesystem/filepath.h>
+#include <utils/trimws.h>
 #include <utils/path.h>
 #include <utils/terminal.h>
 #include <filesystem/read_file.h>
@@ -23,15 +24,7 @@ char *build_descriptor_path(const char* file_path) {
         return NULL;
     }
 
-    // Build descriptor path
-    if (is_directory(file_path) == 0){
-        snprintf(descriptor_file, sizeof(descriptor_file), "%s%s.cfg", get_parent_directory_path(file_path), get_file_directory_name(file_path));
-    }else{
-        snprintf(descriptor_file, sizeof(descriptor_file), "%s%s/%s.cfg", 
-        get_parent_directory_path(file_path),
-        get_file_directory_name(file_path),
-        get_file_directory_name(file_path));
-    }
+    snprintf(descriptor_file, sizeof(descriptor_file), "%s%s.cfg", get_parent_directory_path(file_path), get_file_directory_name(file_path));
     printf("descriptor_file: %s\n", descriptor_file);
     return descriptor_file;
 }
@@ -56,9 +49,10 @@ descriptor_t *read_descriptor_file(const char* file_path){
         free(descriptor_file);
         return NULL;
     }
-
+    
     descriptor->hidden = file_get_int(descriptor_file, "hidden");
     descriptor->page = file_get_value(descriptor_file, "page");
+    descriptor->page = trim_whitespaces(descriptor->page);
 
     return descriptor;
 }
