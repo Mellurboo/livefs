@@ -37,7 +37,7 @@ const char *build_file_path(const char *filename) {
     if (filename[0] == '/') filename++;   // Skip leading '/'
 
     static char full_path[PATH_MAX];
-    
+
     if (strcmp(filename, "") == 0) {     // serve default index.html
         snprintf(full_path, sizeof(full_path), "%sindex.html", root_path);
     } else {
@@ -52,7 +52,7 @@ const char *build_file_path(const char *filename) {
 const char *parse_config_root_path(void){
     char *config_file = get_config_file();
 
-    const char *root_key = file_get_key(config_file, "root");
+    const char *root_key = file_get_value(config_file, "root");
     if (!root_key){
         fprintf(stderr, FATAL "No root key provided, or is unreadable.\n");
         free(config_file);
@@ -79,25 +79,32 @@ const char *parse_config_root_path(void){
 /// @param file_path target path
 /// @return only returns the name of the directory name, NOT WHOLE PATH!
 const char *get_file_directory_name(const char *file_path){
+    static char name[PATH_MAX];
     char path[PATH_MAX];
 
-    // copy path and remove trailing slashes
+    // sanitize file path
     strncpy(path, file_path, sizeof(path) - 1);
     path[sizeof(path) - 1] = '\0';
 
+    // remove trailing slashes
     size_t len = strlen(path);
     while (len > 1 && path[len - 1] == '/') path[--len] = '\0';
 
-    // Remove last component or filename
+    // return dir name only
+    if (is_directory(file_path) == 1) {
+        const char *last_slash = strrchr(path, '/');
+        const char *dir_name = last_slash ? last_slash + 1 : path;
+        snprintf(name, sizeof(name), "%s", dir_name);
+        return name;
+    }
+
     char *last_slash = strrchr(path, '/');
     if (!last_slash) return NULL; // no parent dir
     *last_slash = '\0';
 
-    // Find parent directory name
     char *parent_slash = strrchr(path, '/');
-    char *parent_name = parent_slash ? parent_slash + 1 : path;
+    const char *parent_name = parent_slash ? parent_slash + 1 : path;
 
-    // put the result of parent name in name and return as the result
-    char *name = strdup(parent_name);
+    snprintf(name, sizeof(name), "%s", parent_name);
     return name;
 }

@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <utils/terminal.h>
@@ -73,4 +74,23 @@ char *get_parent_directory_path(const char *filepath){
     path[path_length + 1] = '\0';
 
     return path;
+}
+
+/// @brief Takes a path and stats it to see if it is a dir.
+/// @param path target
+/// @return 1 = dir, 0 = file, -1 = errornous
+int is_directory(const char *path){
+    struct stat path_stat;
+
+    if (stat(path, &path_stat) != 0){
+        return -1;
+    }
+
+    if (S_ISREG(path_stat.st_mode)){
+        return 0;
+    }else if (S_ISDIR(path_stat.st_mode)){
+        return 1;
+    }
+
+    return -1;
 }

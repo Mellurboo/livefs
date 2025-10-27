@@ -54,7 +54,7 @@ int file_get_int(const char *file, const char *key){
 /// @param config_file config file context
 /// @param key name
 /// @return value of key
-char *file_get_key(const char *file, const char *key){
+char *file_get_value(const char *file, const char *key){
     char pattern[PATTERN_SIZE];
     char *pos = get_key_in_file(pattern, file, key);
 

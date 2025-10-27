@@ -14,6 +14,4 @@ typedef struct request{
 /// @param filename filename location
 void send_file_request(int client_sock, const char *filename);
 
-descriptor_t *interpret_descriptor(int client_socket, const char *full_path);
-
-FILE *open_file(int client_socket, const char *filepath);
+descriptor_t *get_descriptor_file(int client_socket, const char *full_path);
