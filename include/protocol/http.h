@@ -2,6 +2,7 @@
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <filesystem/send.h>
 
 // content type structure
 typedef struct {
@@ -10,10 +11,14 @@ typedef struct {
     const char *content_type;
 } content_type_t;
 
+
 /// @brief uses the file name to serve the correct content type
 /// @param filename target file
 /// @return HTTP content type
 const char *get_content_type(const char *filename);
+
+/// @param request 301: HTTP Perminantly moved header
+void http_redirect(int client_socket, request_t *request);
 
 /// @return HTTP bad request header
 void http_bad_request_header(int client_socket);

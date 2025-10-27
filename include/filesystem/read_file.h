@@ -6,3 +6,5 @@
 char *read_file(FILE *fp);
 
 FILE *open_file(const char* directory_path);
+
+ssize_t get_filesize(FILE *fp);

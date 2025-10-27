@@ -4,6 +4,25 @@
 #include <sys/socket.h>
 #include <protocol/http.h>
 #include <inttypes.h>
+#include <utils/terminal.h>
+#include <filesystem/send.h>
+#include <stdlib.h>
+
+/// @param request 301: HTTP Perminantly moved header
+void http_redirect(int client_socket, request_t *request){
+    char redirect_header[512];
+    snprintf(redirect_header, sizeof(redirect_header),
+        "HTTP/1.1 301 Moved Permanently\r\n"
+        "Location: %s/\r\n"
+        "Content-Length: 0\r\n"
+        "Connection: close\r\n"
+        "\r\n",
+        request->path);
+    send(client_socket, redirect_header, strlen(redirect_header), 0);
+    printf(INFO "Redirect directory request to %s\n", request->path);
+    free(request);
+    return;
+}
 
 /// @return ERROR 400: HTTP bad request header
 void http_bad_request_header(int client_socket){

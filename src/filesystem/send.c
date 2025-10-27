@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <libgen.h>
 #include <sys/stat.h>
+#include <utils/path.h>
 #include <utils/time.h>
 #include <sys/socket.h>
 #include <linux/limits.h>
@@ -11,7 +12,6 @@
 #include <utils/terminal.h>
 #include <filesystem/send.h>
 #include <filesystem/filepath.h>
-#include <utils/path.h>
 #include <filesystem/read_file.h>
 #include <socket/request_arguement.h>
 #include <config/descriptor/descriptor_file.h>
@@ -52,14 +52,12 @@ int validate_request(int client_socket, request_t *request){
     return 1;
 }
 
-descriptor_t *interpret_descriptor(int client_socket, const char *full_path){
+/// @brief attempts to read the descriptor file and check if the folder is hidden
+/// @param client_socket client socket
+/// @param full_path full provided path
+/// @return descriptor file pointer
+descriptor_t *get_descriptor_file(int client_socket, const char *full_path){
     descriptor_t *descriptor_file = read_descriptor_file(full_path);
-
-    if (!descriptor_file || descriptor_file->hidden == 1){
-        http_not_found_header(client_socket);
-        return NULL;
-    }
-
     return descriptor_file;
 }
 
@@ -73,17 +71,33 @@ void send_file_request(int client_socket, const char *request_line){
         return;
     }
 
+    // this only checks Request Type and request path, not data validation
     if (!validate_request(client_socket, request)){
         free(request);
         return;
     }
 
+    // Build the full filepath
     char file_path[PATH_MAX];
     strncpy(file_path, build_file_path(request->path), sizeof(file_path) - 1);
     file_path[sizeof(file_path) - 1] = '\0';
     printf(INFO "Opening file: %s\n", file_path);
 
-    descriptor_t *descriptor = interpret_descriptor(client_socket, file_path);
+    // redirect if we dont have the following / at the end
+    if (is_directory(file_path)){
+        if (request->path[strlen(request->path) - 1] != '/'){
+            http_redirect(client_socket, request);
+        }
+    }
+
+    // get and check descriptor file, check its hidden value now so we dont send any data
+    descriptor_t *descriptor = get_descriptor_file(client_socket, file_path);
+    if (!descriptor || descriptor->hidden == 1){
+        http_not_found_header(client_socket);
+        return;
+    }
+
+    // if the file doesnt exsist handle it here.
     if (!path_exists(file_path)){
         fprintf(stderr, BADRESPONSE "Couldn't stat path %s, It probably doesn't exsist.", file_path);
         http_not_found_header(client_socket);
@@ -92,9 +106,21 @@ void send_file_request(int client_socket, const char *request_line){
         return;
     }
 
-    char *filename = basename(file_path);
     char buffer[BUFFER_SIZE];
 
+    /*
+        Handle Files and Directories Differently
+        Files:
+            - Respond 200
+            - Allocate file to Memory
+            - Send raw bytes from Memory
+        Directories:
+            - Respond 200
+            - Use the directory descriptor to locate the webpage file
+            - send the html file with the html content type
+
+        Files get sent and downloaded, directories send a html file
+    */
     if (is_directory(file_path) == 0){
         FILE *fp = open_file(file_path);
         if (!fp){
@@ -104,14 +130,17 @@ void send_file_request(int client_socket, const char *request_line){
             free(descriptor);
             return;
         }
+        
+        char *filename = basename(file_path);       // this is ONLY so we know what filename to serve to the client.
 
-        struct stat fileinfo;
-        stat(file_path, &fileinfo);
-
+        // get the filesizeand then return the correct header.
+        ssize_t filesize = get_filesize(fp);
+        if (filesize == -1) return;
         const char *success_header =
-            http_success(filename, fileinfo.st_size, request_has_arguement((request->path), "download"));
+            http_success(filename, filesize, request_has_arguement((request->path), "download"));
         send(client_socket, success_header, strlen(success_header), 0);
 
+        // send the raw data ofthe file
         size_t fbytes;
         while ((fbytes = fread(buffer, 1, BUFFER_SIZE, fp)) > 0){
             send(client_socket, buffer, fbytes, 0);
@@ -120,16 +149,9 @@ void send_file_request(int client_socket, const char *request_line){
         printf(SUCREQUEST "Sent file %s to Client\n", file_path);
         fclose(fp);
     }else{
-        if (!descriptor || !descriptor->page){
-            fprintf(stderr, ERROR "Failed to open descriptor page for %s\n", file_path);
-            http_not_found_header(client_socket);
-            free(request);
-            free(descriptor);
-            return;
-        }
-        
+        // build the webpage path
         char webpage_path[PATH_MAX];
-        int written = snprintf(webpage_path, sizeof(webpage_path), "%s/%s", file_path, descriptor->page);
+        int written = snprintf(webpage_path, sizeof(webpage_path), "%s%s", file_path, descriptor->page);
         if (written < 0 || written >= (int)sizeof(webpage_path)){
             fprintf(stderr, ERROR "Filepath was too long when joining %s and %s", file_path, descriptor->page);
             http_internal_server_error(client_socket);
@@ -137,20 +159,7 @@ void send_file_request(int client_socket, const char *request_line){
             free(descriptor);
             return;
         }
-
-        struct stat fileinfo;
-        if (stat(webpage_path, &fileinfo) < 0) {
-            perror("stat failed");
-            http_not_found_header(client_socket);
-            free(request);
-            free(descriptor);
-            return;
-        }
         
-        char *serve_filename = basename(webpage_path);
-        const char *success_header = http_success(serve_filename, fileinfo.st_size, request_has_arguement(request->path, "download"));
-        send(client_socket, success_header, strlen(success_header), 0);
-
         FILE *fp = open_file(webpage_path);
         if (!fp){
             perror("open_file failed");
@@ -161,6 +170,15 @@ void send_file_request(int client_socket, const char *request_line){
             return;
         }
 
+        ssize_t filesize = get_filesize(fp);
+        if (filesize == -1) return;
+        
+        // filename to serve to client
+        char *filename = basename(webpage_path);
+        const char *success_header = http_success(filename, filesize, request_has_arguement(request->path, "download"));
+        send(client_socket, success_header, strlen(success_header), 0);
+
+        // raw data to client
         size_t fbytes;
         while ((fbytes = fread(buffer, 1, BUFFER_SIZE, fp)) > 0){
             send(client_socket, buffer, fbytes, 0);
