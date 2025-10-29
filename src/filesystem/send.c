@@ -61,6 +61,17 @@ descriptor_t *get_descriptor_file(int client_socket, const char *full_path){
     return descriptor_file;
 }
 
+/// @brief dont send the entire file at once, buffer it
+/// @param client_socket client socket
+/// @param buffer 1kib buffer
+/// @param fp file pointer
+void send_buffered_bytes(int client_socket, char *buffer, FILE *fp){
+    size_t fbytes;
+    while ((fbytes = fread(buffer, 1, BUFFER_SIZE, fp)) > 0){
+        send(client_socket, buffer, fbytes, 0);
+    }
+}
+
 /// @brief serve the client with the file
 /// @param client_sock client socket
 /// @param request_line full HTTP request
@@ -140,11 +151,7 @@ void send_file_request(int client_socket, const char *request_line){
             http_success(filename, filesize, request_has_arguement((request->path), "download"));
         send(client_socket, success_header, strlen(success_header), 0);
 
-        // send the raw data ofthe file
-        size_t fbytes;
-        while ((fbytes = fread(buffer, 1, BUFFER_SIZE, fp)) > 0){
-            send(client_socket, buffer, fbytes, 0);
-        }
+        send_buffered_bytes(client_socket, buffer, fp);
 
         printf(SUCREQUEST "Sent file %s to Client\n", file_path);
         fclose(fp);
@@ -162,7 +169,6 @@ void send_file_request(int client_socket, const char *request_line){
         
         FILE *fp = open_file(webpage_path);
         if (!fp){
-            perror("open_file failed");
             fprintf(stderr, BADRESPONSE "Failure to open file for directory page %s\n", webpage_path);
             http_not_found_header(client_socket);
             free(request);
@@ -178,11 +184,7 @@ void send_file_request(int client_socket, const char *request_line){
         const char *success_header = http_success(filename, filesize, request_has_arguement(request->path, "download"));
         send(client_socket, success_header, strlen(success_header), 0);
 
-        // raw data to client
-        size_t fbytes;
-        while ((fbytes = fread(buffer, 1, BUFFER_SIZE, fp)) > 0){
-            send(client_socket, buffer, fbytes, 0);
-        }
+        send_buffered_bytes(client_socket, buffer, fp);
 
         printf(SUCREQUEST "Sent Descriptor page %s to client\n", file_path);
         fclose(fp);

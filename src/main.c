@@ -51,6 +51,7 @@ int main(int argc, const char *argv[]){
     int server_socket = get_server_socket();
     int atexit_return = atexit(exitcall);
     if (atexit_return != 0) {printf(WARN "atexit was not set\n");}
+    
     exit_handlers();
 
     char *config_file = get_config_file();
