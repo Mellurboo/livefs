@@ -10,6 +10,7 @@
 #include <config/read_key.h>
 #include <utils/exit_handler.h>
 #include <filesystem/filepath.h>
+#include <filesystem/cache/filecache.h>
 #include <config/global_config/global_config_file.h>
 
 /*
@@ -70,6 +71,10 @@ int main(int argc, const char *argv[]){
     int srvport = file_get_int(config_file, "port");
     server_socket = server_create_socket();
 
+    server_cache_init();
+
+    // I intend on making the cache size editable in the config file so
+    // we will do cache init before we free it here.
     free(config_file);
 
     server_bind_socket(srvport, server_socket);

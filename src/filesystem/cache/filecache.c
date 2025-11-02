@@ -11,6 +11,8 @@
 #include <filesystem/read_file.h>
 #include <filesystem/cache/filecache.h>
 
+file_cache_t file_data_cache;
+file_cache_t directory_descriptor_cache;
 
 /// @brief find file_cache_entry in file_cache context
 /// @param cache cache context
@@ -29,25 +31,15 @@ static ssize_t cache_find_entry(file_cache_t *cache, const char *path){
 /// @brief creates a new cache context of size
 /// @param capacity context size
 /// @return file cache context pointer
-file_cache_t *cache_new(size_t capacity){
-    // allocate cache context
-    file_cache_t *cache = calloc(1, sizeof(*cache));
-    if (!cache){
-        printf(FATAL "Failure to allocate cache context, calloc failure\n");
-        exit(-1);
-    }
-
-    // allocate space for file cache entries
+void cache_new(file_cache_t *cache, size_t capacity){
+    memset(cache, 0, sizeof(*cache));
     cache->entries = calloc(capacity, sizeof(file_cache_entry_t));
-    if (!cache->entries){
-        printf(FATAL "Failure to allocate size for cache entries, calloc failure\n");
-        free(cache);
-        exit(-1);
+    if (!cache->entries) {
+        fprintf(stderr, "FATAL: failed to allocate cache entries\n");
+        exit(1);
     }
-    
     cache->capacity = capacity;
     gtmutex_init(&cache->threadlock);
-    return cache;
 }
 
 /// @brief free a cache context and all of its entries
@@ -63,6 +55,7 @@ void cache_free(file_cache_t *cache){
         free(cache->entries[i].path);
         free(cache->entries[i].data);
     }
+
     free(cache->entries);
     gtmutex_unlock(&cache->threadlock);
     free(cache);
@@ -98,6 +91,7 @@ const char *cache_get_file(file_cache_t *cache, const char *path, size_t *size_o
         if (entry->last_modified == st.st_mtime){
             *size_out = entry->size;
             gtmutex_unlock(&cache->threadlock);
+            printf(INFO "Found cache for file '%s' at cache index [%li]\n", entry->path, cache->count);
             return entry->data;
         }
 
@@ -113,10 +107,10 @@ const char *cache_get_file(file_cache_t *cache, const char *path, size_t *size_o
     FILE *fp = open_file(path);
     if (!fp) return NULL;
 
+    size_t filesize = get_filesize(fp);
+
     char *file = read_file(fp);
     if (!file) return NULL;
-
-    size_t filesize = get_filesize(fp);
     // End blocking code
 
     gtmutex_lock(&cache->threadlock);
@@ -136,6 +130,7 @@ const char *cache_get_file(file_cache_t *cache, const char *path, size_t *size_o
     entry->last_modified = st.st_mtime;
 
     *size_out = entry->size;
+    printf(INFO "Created cache for file '%s' at cache index [%li] (%zu bytes)\n", entry->path, cache->count, filesize);
     const char *retdata = entry->data;
     gtmutex_unlock(&cache->threadlock);
     return retdata;

@@ -13,6 +13,7 @@
 #include <filesystem/send.h>
 #include <filesystem/filepath.h>
 #include <filesystem/read_file.h>
+#include <filesystem/cache/filecache.h>
 #include <socket/request_arguement.h>
 #include <config/descriptor/descriptor_file.h>
 #include <config/global_config/global_config_file.h>
@@ -65,10 +66,15 @@ descriptor_t *get_descriptor_file(int client_socket, const char *full_path){
 /// @param client_socket client socket
 /// @param buffer 1kib buffer
 /// @param fp file pointer
-void send_buffered_bytes(int client_socket, char *buffer, FILE *fp){
-    size_t fbytes;
-    while ((fbytes = fread(buffer, 1, BUFFER_SIZE, fp)) > 0){
-        send(client_socket, buffer, fbytes, 0);
+void send_buffered_bytes(int client_socket, const char *data, size_t size){
+    char databuffer[BUFFER_SIZE];
+    size_t sent = 0;
+
+    while (sent < size){
+        size_t chunk = (size - sent > BUFFER_SIZE) ? BUFFER_SIZE : (size - sent);
+        memcpy(databuffer, data + sent, chunk);
+        send(client_socket, databuffer, chunk, 0);
+        sent += chunk;
     }
 }
 
@@ -78,119 +84,89 @@ void send_buffered_bytes(int client_socket, char *buffer, FILE *fp){
 void send_file_request(int client_socket, const char *request_line){
     request_t *request = parse_request_structure(client_socket, request_line);
     if (!request){
-        printf(ERROR "Failed to parse request_line='%s'\n", request_line);
+        fprintf(stderr, ERROR "Failed to parse request '%s'\n", request_line);
         return;
     }
 
-    // this only checks Request Type and request path, not data validation
     if (!validate_request(client_socket, request)){
         free(request);
         return;
     }
 
-    // Build the full filepath
+    // build the full file path to serve
     char file_path[PATH_MAX];
-    strncpy(file_path, build_file_path(request->path), sizeof(file_path) - 1);
-    file_path[sizeof(file_path) - 1] = '\0';
-    printf(INFO "Opening file: %s\n", file_path);
+    strncpy(file_path, build_file_path(request->path), sizeof(file_path));
+    file_path[sizeof(file_path) -1] = '\0';
+    printf(INFO "Opening File: '%s'\n", file_path);
 
-    // redirect if we dont have the following / at the end
-    if (is_directory(file_path)){
-        if (request->path[strlen(request->path) - 1] != '/'){
-            http_redirect(client_socket, request);
-        }
-    }
-
-    // get and check descriptor file, check its hidden value now so we dont send any data
-    descriptor_t *descriptor = get_descriptor_file(client_socket, file_path);
-    if (!descriptor || descriptor->hidden == 1){
-        http_not_found_header(client_socket);
+    // no trailing slash -> redirect
+    if (is_directory(file_path) && request->path[strlen(request->path) -1] != '/'){
+        http_redirect(client_socket, request);
         return;
     }
 
-    // if the file doesnt exsist handle it here.
+    // get descriptors
+    descriptor_t *descriptor = get_descriptor_file(client_socket, file_path);
+    if (!descriptor || descriptor->hidden == 1){
+        http_not_found_header(client_socket);
+        free(request);
+        return;
+    }
+
+    // verify the path
     if (!path_exists(file_path)){
-        fprintf(stderr, BADRESPONSE "Couldn't stat path %s, It probably doesn't exsist.", file_path);
+        fprintf(stderr, BADRESPONSE "Path '%s' doesn't exsist or failed to read\n", file_path);
         http_not_found_header(client_socket);
         free(request);
         free(descriptor);
         return;
     }
 
-    char buffer[BUFFER_SIZE];
+    // serving file
+    size_t filesize = 0;
+    const char *filedata = NULL;
+    char filename[PATH_MAX];
 
-    /*
-        Handle Files and Directories Differently
-        Files:
-            - Respond 200
-            - Allocate file to Memory
-            - Send raw bytes from Memory
-        Directories:
-            - Respond 200
-            - Use the directory descriptor to locate the webpage file
-            - send the html file with the html content type
-
-        Files get sent and downloaded, directories send a html file
-    */
-    if (is_directory(file_path) == 0){
-        FILE *fp = open_file(file_path);
-        if (!fp){
-            fprintf(stderr, BADRESPONSE "Failure to open file %s\n", file_path);
+    if (!is_directory(file_path)){
+        strncpy(filename, file_path, sizeof(filename));
+        filename[sizeof(filename)-1] = '\0';
+        filedata = cache_get_file(&file_data_cache, file_path, &filesize);
+        if (!filedata){
+            fprintf(stderr, ERROR "Failed to read file '%s'\n", file_path);
             http_not_found_header(client_socket);
             free(request);
             free(descriptor);
             return;
         }
-        
-        char *filename = basename(file_path);       // this is ONLY so we know what filename to serve to the client.
-
-        // get the filesizeand then return the correct header.
-        ssize_t filesize = get_filesize(fp);
-        if (filesize == -1) return;
-        const char *success_header =
-            http_success(filename, filesize, request_has_arguement((request->path), "download"));
-        send(client_socket, success_header, strlen(success_header), 0);
-
-        send_buffered_bytes(client_socket, buffer, fp);
-
-        printf(SUCREQUEST "Sent file %s to Client\n", file_path);
-        fclose(fp);
-    }else{
-        // build the webpage path
+    }else{  // serving directory page
         char webpage_path[PATH_MAX];
-        int written = snprintf(webpage_path, sizeof(webpage_path), "%s%s", file_path, descriptor->page);
-        if (written < 0 || written >= (int)sizeof(webpage_path)){
-            fprintf(stderr, ERROR "Filepath was too long when joining %s and %s", file_path, descriptor->page);
+        int w = snprintf(webpage_path, sizeof(webpage_path), "%s%s", file_path, descriptor->page);
+        if (w < 0 || w >= (int)sizeof(webpage_path)){
+            fprintf(stderr, "Filepath too long joining '%s' and '%s'\n", file_path, descriptor->page);
             http_internal_server_error(client_socket);
             free(request);
             free(descriptor);
             return;
         }
-        
-        FILE *fp = open_file(webpage_path);
-        if (!fp){
-            fprintf(stderr, BADRESPONSE "Failure to open file for directory page %s\n", webpage_path);
+
+        strncpy(filename, webpage_path, sizeof(filename)-1);
+        filename[sizeof(filename)-1] = '\0';
+        filedata = cache_get_file(&file_data_cache, webpage_path, &filesize);
+        if (!filedata){
+            fprintf(stderr, BADRESPONSE "Failed to read webpage '%s'\n", webpage_path);
             http_not_found_header(client_socket);
             free(request);
             free(descriptor);
             return;
         }
-
-        ssize_t filesize = get_filesize(fp);
-        if (filesize == -1) return;
-        
-        // filename to serve to client
-        char *filename = basename(webpage_path);
-        const char *success_header = http_success(filename, filesize, request_has_arguement(request->path, "download"));
-        send(client_socket, success_header, strlen(success_header), 0);
-
-        send_buffered_bytes(client_socket, buffer, fp);
-
-        printf(SUCREQUEST "Sent Descriptor page %s to client\n", file_path);
-        fclose(fp);
     }
 
+    const char *success_header = http_success(basename(filename), filesize, request_has_arguement(request->path, "download"));
+    send(client_socket, success_header, strlen(success_header), 0);
+
+    send_buffered_bytes(client_socket, filedata, filesize);
+    printf(SUCREQUEST "Served file '%s' to Client\n", file_path);
+    
     free(request);
     free(descriptor);
-    return;
 }
