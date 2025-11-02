@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <utils/terminal.h>
+#include <filesystem/cache/filecache.h>
 
 /// @brief catches signal response
 /// @param sig
