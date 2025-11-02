@@ -91,7 +91,11 @@ const char *cache_get_file(file_cache_t *cache, const char *path, size_t *size_o
         if (entry->last_modified == st.st_mtime){
             *size_out = entry->size;
             gtmutex_unlock(&cache->threadlock);
-            printf(INFO "Found cache for file '%s' at cache index [%li]\n", entry->path, cache->count);
+            printf(INFO "Found cache for file '%s' in %s at cache index [%zu] (%zu bytes)\n",
+                entry->path, 
+                (cache == &file_data_cache) ? "file_data_cache" : "directory_descriptor_cache",
+                cache->count - 1,
+                entry->size);
             return entry->data;
         }
 
@@ -130,7 +134,11 @@ const char *cache_get_file(file_cache_t *cache, const char *path, size_t *size_o
     entry->last_modified = st.st_mtime;
 
     *size_out = entry->size;
-    printf(INFO "Created cache for file '%s' at cache index [%li] (%zu bytes)\n", entry->path, cache->count, filesize);
+    printf(INFO "Created cache for file '%s' in %s at cache index [%zu] (%zu bytes)\n",
+       path, 
+       (cache == &file_data_cache) ? "file_data_cache" : "directory_descriptor_cache",
+       cache->count - 1,
+       filesize);
     const char *retdata = entry->data;
     gtmutex_unlock(&cache->threadlock);
     return retdata;
