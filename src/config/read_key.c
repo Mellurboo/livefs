@@ -67,6 +67,8 @@ char *file_get_value(const char *file, const char *key){
 
     pos += strlen(pattern);
 
+    // if something is empty it segfaults here! fix it!
+
     // Find the end of the line
     const char *end = strchr(pos, '\n');
     static char temp[PATH_MAX]; // temporary buffer

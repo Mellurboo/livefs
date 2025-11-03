@@ -4,106 +4,96 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <utils/path.h>
 #include <linux/limits.h>
 #include <utils/terminal.h>
-#include <filesystem/filepath.h>
-#include <socket/request_arguement.h>
+#include <utils/path.h>
 #include <config/global_config/global_config_file.h>
 
 /// @brief check if the path provided exsists
-/// @param path target
+/// @param path provided path
 /// @return success or exit
 int path_exists(const char *path) {
     struct stat st;
-    return stat(path, &st) == 0; // returns 1 if exists, 0 if not
+    return stat(path, &st) == 0;
 }
 
-/// @brief Construct the file path from the config file and append a file name
-/// @param buf dest buffer
-/// @param buf_size dest buffer size
-/// @param filename target filename
-const char *build_file_path(const char *filename) {
-    const char *root_path = parse_config_root_path();
-    if (!root_path || !*root_path) {
-        fprintf(stderr, FATAL "Root Path was empty\n");
-        return "";
-    }
-
-    if (!filename) filename = "";         // Check NULL first
-    if (filename[0] == '/') filename++;   // Skip leading '/'
-
-    static char full_path[PATH_MAX];
-
-    if (strcmp(filename, "") == 0) {     // serve default index.html
-        snprintf(full_path, sizeof(full_path), "%sindex.html", root_path);
-    } else {
-        snprintf(full_path, sizeof(full_path), "%s%s", root_path, filename);
-    }
-
-    return strip_arguemnts(full_path);
-}
-
-/// @brief Builds the Config Root Path, the server will read from here when looking for files
-/// @return Parsed file path, the root for which the servers accessable files are
+/// @brief Returns the pure server root path from config
+/// @return buffer containing root path with slash
 const char *parse_config_root_path(void){
-    global_config_t *gloabl_config = get_global_config_structure();
-
-    const char *root_key = gloabl_config->root;
-    if (!root_key){
-        fprintf(stderr, FATAL "No root key provided, or is unreadable.\n");
-        free(gloabl_config);
+    global_config_t *cfg = get_global_config_structure();
+    if (!cfg || !cfg->root){
+        fprintf(stderr, FATAL "No root path provided in global config.\n");
         return NULL;
     }
 
-    char total_path[PATH_MAX];
-    strncpy(total_path, root_key, sizeof(total_path) - 1);
-    total_path[sizeof(total_path) - 1] = '\0';
+    static char root_path[PATH_MAX];
+    memset(root_path, 0, sizeof(root_path));
 
-    static char parsed_path[PATH_MAX];
-    if (total_path[0] == '~'){
-        const char *home_path = get_home_path();
-        snprintf(parsed_path, sizeof(parsed_path), "%s%s", home_path, total_path + 1);
-    }else{
-        strcpy(parsed_path, total_path);
+    if (cfg->root[0] == '~'){
+        snprintf(root_path, sizeof(root_path), "%s%s", get_home_path(), cfg->root + 1);
+    } else {
+        snprintf(root_path, sizeof(root_path), "%s", cfg->root);
     }
-    
-    free(gloabl_config);
-    return parsed_path;
+
+    // add trailing slash
+    size_t len = strlen(root_path);
+    if (len && root_path[len-1] != '/'){
+        strncat(root_path, "/", sizeof(root_path) - len - 1);
+    }
+
+    return root_path;
 }
 
-/// @brief gets the stripped name of a parent directory
-/// @param file_path target path
-/// @return only returns the name of the directory name, NOT WHOLE PATH!
+/// @brief Build full file path from request path
+/// @param request_path HTTP request path
+/// @return static buffer with full path
+const char *build_file_path(const char *request_path){
+    const char *root = parse_config_root_path();
+    if (!root) return NULL;
+    static char full_path[PATH_MAX];
+    memset(full_path, 0, sizeof(full_path));
+
+    // skip leading slash on request path
+    if (request_path && request_path[0] == '/'){
+        snprintf(full_path, sizeof(full_path), "%s%s", root, request_path + 1);
+    } else if (request_path) {
+        snprintf(full_path, sizeof(full_path), "%s%s", root, request_path);
+    } else {
+        snprintf(full_path, sizeof(full_path), "%s", root);
+    }
+
+    return full_path;
+}
+
+/// @brief Get parent directory name of a path
+/// @param file_path full path
+/// @return static buffer with directory name
 const char *get_file_directory_name(const char *file_path){
     static char name[PATH_MAX];
+    if (!file_path) return NULL;
+
     char path[PATH_MAX];
+    strncpy(path, file_path, sizeof(path)-1);
+    path[sizeof(path)-1] = '\0';
 
-    // sanitize file path
-    strncpy(path, file_path, sizeof(path) - 1);
-    path[sizeof(path) - 1] = '\0';
-
-    // remove trailing slashes
+    // Remove trailing slash
     size_t len = strlen(path);
-    while (len > 1 && path[len - 1] == '/') path[--len] = '\0';
+    while (len > 1 && path[len-1] == '/') path[--len] = '\0';
 
-    // return dir name only
-    if (is_directory(file_path) == 1) {
+    //return last component if its a dir
+    if (is_directory(path)) {
         const char *last_slash = strrchr(path, '/');
-        const char *dir_name = last_slash ? last_slash + 1 : path;
-        snprintf(name, sizeof(name), "%s", dir_name);
+        snprintf(name, sizeof(name), "%s", last_slash ? last_slash+1 : path);
         return name;
     }
 
+    // if file get parent directory name
     char *last_slash = strrchr(path, '/');
-    if (!last_slash) return NULL; // no parent dir
-    *last_slash = '\0';
+    if (!last_slash) return NULL;
 
+    *last_slash = '\0'; // terminate at parent
     char *parent_slash = strrchr(path, '/');
-    const char *parent_name = parent_slash ? parent_slash + 1 : path;
-
-    snprintf(name, sizeof(name), "%s", parent_name);
+    snprintf(name, sizeof(name), "%s", parent_slash ? parent_slash+1 : path);
     return name;
 }
