@@ -59,5 +59,7 @@ char *file_get_value(const char *file, const char *key){
     char *pos = get_key_in_file(pattern, file, key);
 
     pos += strlen(pattern);
+    char *end = strchr(pos, '\n');
+    if (end) *end = '\0';
     return pos;
 }

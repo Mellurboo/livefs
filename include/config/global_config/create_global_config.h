@@ -1,6 +1,6 @@
 #pragma once
 
-#define STANDARD_CONFIG "port = 8080\nroot = ~/"
+#define STANDARD_CONFIG "port = 8080\nroot = ~/\nenable_ssl = 1"
 
 /// @brief Creates .config/livefs file if it doesn't exsist
 /// @return success?

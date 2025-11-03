@@ -3,6 +3,11 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
+/// @brief initialise SSL
+/// @param config_file config file context
+/// @return int success
+int initSSL(const char *config_file);
+
 /// @brief returns the server socket address
 /// @return server socket address
 struct sockaddr_in get_server_sockaddr(void);

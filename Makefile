@@ -57,7 +57,7 @@ all: $(ELF_TARGET_64)
 #
 $(ELF_TARGET_64): $(ELF_OBJS_64)
 	@mkdir -p $(ELF_BIN_DIR_64)
-	$(CC) $(COMMON_CFLAGS) $(CFLAGS) -m64 -o $(ELF_BIN_DIR_64)/$(ELF_TARGET_64) $^
+	$(CC) $(COMMON_CFLAGS) $(CFLAGS) -m64 -o $(ELF_BIN_DIR_64)/$(ELF_TARGET_64) $^ -lssl -lcrypto
 #
 # Object build rules per architecture
 #

@@ -71,6 +71,14 @@ int main(int argc, const char *argv[]){
     int srvport = file_get_int(config_file, "port");
     server_socket = server_create_socket();
 
+    if (file_get_int(config_file, "enable_ssl") == 1){
+        #define ENABLE_SSL  1
+        if (!initSSL(config_file)) { // ssl fails to enable even though its set to enable in config, wheyy
+            fprintf(stderr, FATAL "Failure to enable SSL despite being set in config, ensure the key and cert is valid\n");
+            exit(-1);
+        }
+    }
+
     server_cache_init();
 
     // I intend on making the cache size editable in the config file so
