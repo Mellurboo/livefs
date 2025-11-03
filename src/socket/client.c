@@ -18,13 +18,14 @@
 void client_handler(void* fd_void) {
     printf("\n%sRequest Start %s", INFO, get_current_server_time());
     
+    global_config_t *global_config = get_global_config_structure();
     char request[BUFFER_SIZE] = {0};
     int client_socket = (uintptr_t)fd_void;
     SSL *ssl = NULL;
 
     int requestread = 0;
 
-    if (get_ssl_enabled() && is_secured_connection(client_socket)){
+    if (global_config->enable_ssl && is_secured_connection(client_socket)){
         // Create SSL object for this client
         ssl = SSL_new(ssl_ctx);
         if (!ssl) {
@@ -47,7 +48,7 @@ void client_handler(void* fd_void) {
         gtblockfd(client_socket, GTBLOCKIN);
         requestread = SSL_read(ssl, request, BUFFER_SIZE - 1);
 
-    }else if (get_insecure_connections_enabled()){
+    }else if (global_config->allow_insecure_connections){
         gtblockfd(client_socket, GTBLOCKIN);
         requestread = recv(client_socket, request, BUFFER_SIZE - 1, 0);
     }else{
@@ -64,6 +65,11 @@ void client_handler(void* fd_void) {
         }
     }
     
+    if (is_secured_connection(client_socket)){
+        SSL_shutdown(ssl);
+        SSL_free(ssl);
+    }
+
     close(client_socket);
 }
 

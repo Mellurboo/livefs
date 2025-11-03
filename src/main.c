@@ -55,27 +55,21 @@ int main(int argc, const char *argv[]){
     
     exit_handlers();
 
-    char *config_file = get_config_file();
-
-    if (!config_file){
-        printf(FATAL "No Config File Found!\n");
+    global_config_t *global_config = create_global_config_structure();
+    if (!global_config){
+        printf(FATAL "Failure to register config file or it doesnt exsist!\n");
         return -1;
     }
-    printf(INFO "Registered Config File\n");
-
-    const char *root_path = parse_config_root_path();
-    path_exists(root_path);
+    printf(SUCCESS "Registered Config File\n");
+    path_exists(global_config->root);
 
     gtinit();
 
-    int srvport = file_get_int(config_file, "port");
+    int srvport = global_config->port;
     server_socket = server_create_socket();
 
-    set_ssl_enabled(file_get_int(config_file, "enable_ssl"));
-    set_insecure_connections_enabled(file_get_int(config_file, "allow_insecure_connections"));
-
-    if (get_ssl_enabled()){
-        if (!initSSL(config_file, server_socket)) { // ssl fails to enable even though its set to enable in config, wheyy
+    if (global_config->enable_ssl){
+        if (!initSSL(global_config, server_socket)) { // ssl fails to enable even though its set to enable in config, wheyy
             fprintf(stderr, FATAL "Found and Registered Certificate and Key Files\n");
             exit(-1);
         }
@@ -83,14 +77,11 @@ int main(int argc, const char *argv[]){
 
     server_cache_init();
 
-    // I intend on making the cache size editable in the config file so
-    // we will do cache init before we free it here.
-    free(config_file);
-
     server_bind_socket(srvport, server_socket);
     server_listen(server_socket);
     client_listener(server_socket);
 
     // Clean up, at this point the server is closed
+    free(global_config);
     close(server_socket);
 }

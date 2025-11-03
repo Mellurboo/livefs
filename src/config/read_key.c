@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <utils/terminal.h>
 #include <utils/path.h>
+#include <linux/limits.h>
 
 #define PATTERN_SIZE    128
 
@@ -56,10 +57,23 @@ int file_get_int(const char *file, const char *key){
 /// @return value of key
 char *file_get_value(const char *file, const char *key){
     char pattern[PATTERN_SIZE];
-    char *pos = get_key_in_file(pattern, file, key);
+    snprintf(pattern, sizeof(pattern), "%s = ", key);
+
+    const char *pos = strstr(file, pattern);
+    if (!pos) {
+        fprintf(stderr, ERROR "Config key not found: %s\n", key);
+        return NULL;
+    }
 
     pos += strlen(pattern);
-    char *end = strchr(pos, '\n');
-    if (end) *end = '\0';
-    return pos;
+
+    // Find the end of the line
+    const char *end = strchr(pos, '\n');
+    static char temp[PATH_MAX]; // temporary buffer
+    size_t len = end ? (size_t)(end - pos) : strlen(pos);
+    if (len >= sizeof(temp)) len = sizeof(temp) - 1;
+    memcpy(temp, pos, len);
+    temp[len] = '\0';
+
+    return temp;
 }

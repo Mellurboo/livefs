@@ -7,17 +7,10 @@
 #include <config/read_key.h>
 #include <linux/limits.h>
 #include <openssl/err.h>
+#include <config/global_config/global_config_file.h>
 
 struct sockaddr_in server_addr;
 SSL_CTX *ssl_ctx = NULL;
-
-int enable_ssl = 0;
-int get_ssl_enabled() {return enable_ssl;}
-int set_ssl_enabled(int i) {enable_ssl = i; return enable_ssl;}
-
-int allow_insecure_connections = 0;
-int get_insecure_connections_enabled() {return allow_insecure_connections;}
-int set_insecure_connections_enabled(int i) {allow_insecure_connections = i; return allow_insecure_connections;}
 
 /// @brief returns the server socket address
 /// @return server socket address
@@ -50,7 +43,7 @@ int server_create_socket(void) {
 /// @brief initialise SSL
 /// @param config_file config file context
 /// @return int success
-int initSSL(const char *config_file, int server_socket){
+int initSSL(global_config_t *global_config, int server_socket){
 
     char certificate_path[PATH_MAX];
     char key_path[PATH_MAX];
@@ -63,11 +56,11 @@ int initSSL(const char *config_file, int server_socket){
 
     SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_NONE, NULL); // this is normal
 
-    strncpy(key_path, "/home/mellurboo/ssl/server.key", sizeof(key_path)-1);
+    strncpy(key_path, global_config->ssl_key_path, sizeof(key_path)-1);
     key_path[sizeof(key_path)-1] = 0;
     key_path[strcspn(key_path, "\r\n")] = 0;
 
-    strncpy(certificate_path, "/home/mellurboo/ssl/server.crt", sizeof(certificate_path)-1);
+    strncpy(certificate_path, global_config->ssl_cert_path, sizeof(certificate_path)-1);
     certificate_path[sizeof(certificate_path)-1] = 0;
     certificate_path[strcspn(certificate_path, "\r\n")] = 0;
 
@@ -94,8 +87,6 @@ void server_bind_socket(int port, int server_socket){
         perror("bind");
         fprintf(stderr, FATAL "Error in Binding Socket, Socket Bind Return -1 %s:%d\n", __FILE__, __LINE__);
     }
-
-    
 }
 
 /// @brief starts the server listener

@@ -4,21 +4,14 @@
 #include <sys/socket.h>
 #include <stddef.h>
 #include <openssl/ssl.h>
+#include <config/global_config/global_config_file.h>
 
 extern SSL_CTX *ssl_ctx;
-
-extern int enable_ssl;
-int get_ssl_enabled() ;
-int set_ssl_enabled(int i);
-
-extern int allow_insecure_connections;
-int get_insecure_connections_enabled();
-int set_insecure_connections_enabled(int i);
 
 /// @brief initialise SSL
 /// @param config_file config file context
 /// @return int success
-int initSSL(const char *config_file, int server_socket);
+int initSSL(global_config_t *global_config, int server_socket);
 
 /// @brief returns the server socket address
 /// @return server socket address
