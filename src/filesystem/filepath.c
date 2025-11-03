@@ -9,7 +9,6 @@
 #include <utils/path.h>
 #include <linux/limits.h>
 #include <utils/terminal.h>
-#include <config/read_key.h>
 #include <filesystem/filepath.h>
 #include <socket/request_arguement.h>
 #include <config/global_config/global_config_file.h>
@@ -50,12 +49,12 @@ const char *build_file_path(const char *filename) {
 /// @brief Builds the Config Root Path, the server will read from here when looking for files
 /// @return Parsed file path, the root for which the servers accessable files are
 const char *parse_config_root_path(void){
-    char *config_file = get_config_file();
+    global_config_t *gloabl_config = get_global_config_structure();
 
-    const char *root_key = file_get_value(config_file, "root");
+    const char *root_key = gloabl_config->root;
     if (!root_key){
         fprintf(stderr, FATAL "No root key provided, or is unreadable.\n");
-        free(config_file);
+        free(gloabl_config);
         return NULL;
     }
 
@@ -70,8 +69,8 @@ const char *parse_config_root_path(void){
     }else{
         strcpy(parsed_path, total_path);
     }
-
-    free(config_file);
+    
+    free(gloabl_config);
     return parsed_path;
 }
 

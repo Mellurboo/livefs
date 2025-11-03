@@ -4,7 +4,6 @@
 #include <string.h>
 #include <socket/socket.h>
 #include <utils/terminal.h>
-#include <config/read_key.h>
 #include <linux/limits.h>
 #include <openssl/err.h>
 #include <config/global_config/global_config_file.h>

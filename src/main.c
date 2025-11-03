@@ -7,7 +7,6 @@
 #include <vendor/gt/gt.h>
 #include <socket/socket.h>
 #include <utils/terminal.h>
-#include <config/read_key.h>
 #include <utils/exit_handler.h>
 #include <filesystem/filepath.h>
 #include <filesystem/cache/filecache.h>
