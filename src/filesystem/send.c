@@ -66,22 +66,42 @@ descriptor_t *get_descriptor_file(int client_socket, const char *full_path){
 /// @param client_socket client socket
 /// @param buffer 1kib buffer
 /// @param fp file pointer
-void send_buffered_bytes(int client_socket, const char *data, size_t size){
+void send_buffered_bytes(int client_socket, SSL *ssl, const char *data, size_t size){
     char databuffer[BUFFER_SIZE];
     size_t sent = 0;
 
     while (sent < size){
         size_t chunk = (size - sent > BUFFER_SIZE) ? BUFFER_SIZE : (size - sent);
         memcpy(databuffer, data + sent, chunk);
-        send(client_socket, databuffer, chunk, 0);
-        sent += chunk;
+
+        ssize_t w = send_data(client_socket, ssl, databuffer, chunk);
+        if (w <= 0){
+            fprintf(stderr, ERROR "Error sending data\n");
+            break;
+        }
+
+        sent += w;
+    }
+}
+
+ssize_t send_data(int client_socket, SSL *ssl, const void *data, size_t size){
+    if (ssl){
+        size_t w = SSL_write(ssl, data, size);
+        if (w <= 0){
+            int err = SSL_get_error(ssl, w);
+            fprintf(stderr, ERROR "SSL Error: %i", err);
+            return -1;
+        }
+        return w;
+    }else{
+        return send(client_socket, data, size, 0);
     }
 }
 
 /// @brief serve the client with the file
 /// @param client_sock client socket
 /// @param request_line full HTTP request
-void send_file_request(int client_socket, const char *request_line){
+void send_file_request(int client_socket, SSL *ssl, const char *request_line){
     request_t *request = parse_request_structure(client_socket, request_line);
     if (!request){
         fprintf(stderr, ERROR "Failed to parse request '%s'\n", request_line);
@@ -162,9 +182,9 @@ void send_file_request(int client_socket, const char *request_line){
     }
 
     const char *success_header = http_success(basename(filename), filesize, request_has_arguement(request->path, "download"));
-    send(client_socket, success_header, strlen(success_header), 0);
+    send_data(client_socket, ssl, success_header, strlen(success_header));
 
-    send_buffered_bytes(client_socket, filedata, filesize);
+    send_buffered_bytes(client_socket, ssl, filedata, filesize);
     printf(SUCREQUEST "Served file '%s' to Client\n", file_path);
     
     free(request);
