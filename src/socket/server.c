@@ -2,10 +2,22 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <utils/terminal.h>
 #include <socket/socket.h>
+#include <utils/terminal.h>
+#include <config/read_key.h>
+#include <linux/limits.h>
+#include <openssl/err.h>
 
 struct sockaddr_in server_addr;
+SSL_CTX *ssl_ctx = NULL;
+
+int enable_ssl = 0;
+int get_ssl_enabled() {return enable_ssl;}
+int set_ssl_enabled(int i) {enable_ssl = i; return enable_ssl;}
+
+int allow_insecure_connections = 0;
+int get_insecure_connections_enabled() {return allow_insecure_connections;}
+int set_insecure_connections_enabled(int i) {allow_insecure_connections = i; return allow_insecure_connections;}
 
 /// @brief returns the server socket address
 /// @return server socket address
@@ -35,6 +47,40 @@ int server_create_socket(void) {
     return server_socket;
 }
 
+/// @brief initialise SSL
+/// @param config_file config file context
+/// @return int success
+int initSSL(const char *config_file, int server_socket){
+
+    char certificate_path[PATH_MAX];
+    char key_path[PATH_MAX];
+
+    ssl_ctx = SSL_CTX_new(TLS_server_method());
+    if (!ssl_ctx){
+        ERR_print_errors_fp(stderr);
+        return 0;
+    }
+
+    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_NONE, NULL); // this is normal
+
+    strncpy(key_path, "/home/mellurboo/ssl/server.key", sizeof(key_path)-1);
+    key_path[sizeof(key_path)-1] = 0;
+    key_path[strcspn(key_path, "\r\n")] = 0;
+
+    strncpy(certificate_path, "/home/mellurboo/ssl/server.crt", sizeof(certificate_path)-1);
+    certificate_path[sizeof(certificate_path)-1] = 0;
+    certificate_path[strcspn(certificate_path, "\r\n")] = 0;
+
+    if (SSL_CTX_use_certificate_file(ssl_ctx, certificate_path, SSL_FILETYPE_PEM) <= 0 ||
+    SSL_CTX_use_PrivateKey_file(ssl_ctx, key_path, SSL_FILETYPE_PEM) <= 0) {
+        ERR_print_errors_fp(stderr);
+        return 0;
+    }
+
+    printf(SUCCESS "SSL Enabled with certificate '%s'\n", certificate_path);
+    return 1;
+}
+
 /// @brief Binds the socket to a port and address, address is set to INADDR_ANY. handle cleanup if failed
 /// @param port target port to bind to
 void server_bind_socket(int port, int server_socket){
@@ -48,6 +94,8 @@ void server_bind_socket(int port, int server_socket){
         perror("bind");
         fprintf(stderr, FATAL "Error in Binding Socket, Socket Bind Return -1 %s:%d\n", __FILE__, __LINE__);
     }
+
+    
 }
 
 /// @brief starts the server listener

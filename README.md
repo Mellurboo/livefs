@@ -8,14 +8,11 @@ I will be able to add simple file pre-viewing.
 
 Check out the official test server at `livefs.chumnet.xyz` and see it in action
 
-> [!CAUTION]  
-> Due to the pre-view nature of this program, it is reccomended to be used in LAN environments only until later security updates. expose to the internet at your own risk.
-
 ## Permissions Philosophy
 > [!IMPORTANT]  
 > Below is implemented for the most part but still up to change, expect this part of the README to change
 
-Permissions are done on a per-directory basis, The philosophy is that users have no permissions and can simply do readonly operations including downloading, It's down to the server host to manage permissions for everyone. heres an example
+Permissions are done on a per-directory basis, The philosophy is that users have no permissions and can simply do readonly operations including downloading, It's down to the server host to manage permissions for everyone.
 
 >[!NOTE]
 > Thanks to the UK Govornment, I can not access my own imgur resources, as a result all images you see on this readme are hosted on a livefs server!
