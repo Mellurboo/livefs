@@ -9,9 +9,6 @@ I will be able to add simple file pre-viewing.
 Check out the official test server at `livefs.chumnet.xyz` and see it in action
 
 ## Permissions Philosophy
-> [!IMPORTANT]  
-> Below is implemented for the most part but still up to change, expect this part of the README to change
-
 Permissions are done on a per-directory basis, The philosophy is that users have no permissions and can simply do readonly operations including downloading, It's down to the server host to manage permissions for everyone.
 
 >[!NOTE]
