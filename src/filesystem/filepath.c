@@ -21,6 +21,21 @@ int path_exists(const char *path) {
     return stat(path, &st) == 0; // returns 1 if exists, 0 if not
 }
 
+/// @brief removes weird doubleslashes
+/// @param path filepath
+void normalize_path(char *path) {
+    char *src = path;
+    char *dst = path;
+    while (*src) {
+        *dst = *src++;
+        if (*dst == '/') {
+            while (*src == '/') src++;
+        }
+        dst++;
+    }
+    *dst = '\0';
+}
+
 /// @brief Construct the file path from the config file and append a file name
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
@@ -43,6 +58,7 @@ const char *build_file_path(const char *filename) {
         snprintf(full_path, sizeof(full_path), "%s%s", root_path, filename);
     }
 
+    normalize_path(full_path);
     return strip_arguemnts(full_path);
 }
 
@@ -54,7 +70,6 @@ const char *parse_config_root_path(void){
     const char *root_key = gloabl_config->root;
     if (!root_key){
         fprintf(stderr, FATAL "No root key provided, or is unreadable.\n");
-        free(gloabl_config);
         return NULL;
     }
 

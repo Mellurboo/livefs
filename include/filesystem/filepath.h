@@ -20,3 +20,7 @@ const char *get_file_directory_name(const char *file_path);
 /// @param path target
 /// @return success or exit
 int path_exists(const char *path);
+
+/// @brief removes weird doubleslashes
+/// @param path filepath
+void normalize_path(char *path);
