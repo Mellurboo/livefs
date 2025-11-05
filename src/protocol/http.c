@@ -20,7 +20,6 @@ void http_redirect(int client_socket, request_t *request){
         request->path);
     send(client_socket, redirect_header, strlen(redirect_header), 0);
     printf(INFO "Redirect directory request to %s\n", request->path);
-    free(request);
     return;
 }
 
