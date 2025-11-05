@@ -24,6 +24,7 @@ global_config_t *create_global_config_structure(){
         exit(-1);
     }
 
+    printf("%i\n", file_get_int(config_file, "port"));
     global_config->port         = file_get_int(config_file, "port");
     global_config->root         = strdup(file_get_value(config_file, "root"));
     
