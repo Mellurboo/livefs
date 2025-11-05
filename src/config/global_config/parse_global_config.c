@@ -29,8 +29,14 @@ global_config_t *create_global_config_structure(){
     
     global_config->enable_ssl   = file_get_int(config_file, "enable_ssl");
     global_config->allow_insecure_connections = file_get_int(config_file, "allow_insecure_connections");
-    global_config->ssl_cert_path = strdup(file_get_value(config_file, "ssl_cert_path"));
-    global_config->ssl_key_path = strdup(file_get_value(config_file, "ssl_key_path"));
+
+    if (global_config->enable_ssl == 1) {
+        global_config->ssl_cert_path = strdup(file_get_value(config_file, "ssl_cert_path"));
+        global_config->ssl_key_path = strdup(file_get_value(config_file, "ssl_key_path"));
+    } else {
+        global_config->ssl_cert_path = NULL;
+        global_config->ssl_key_path = NULL;
+    }
     
     free(config_file);
     return global_config;
