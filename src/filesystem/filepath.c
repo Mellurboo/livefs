@@ -53,9 +53,9 @@ const char *build_file_path(const char *filename) {
     static char full_path[PATH_MAX];
 
     if (strcmp(filename, "") == 0) {     // serve default index.html
-        snprintf(full_path, sizeof(full_path), "%sindex.html", root_path);
+        snprintf(full_path, sizeof(full_path), "%s/index.html", root_path);
     } else {
-        snprintf(full_path, sizeof(full_path), "%s%s", root_path, filename);
+        snprintf(full_path, sizeof(full_path), "%s/%s", root_path, filename);
     }
 
     normalize_path(full_path);
@@ -65,27 +65,31 @@ const char *build_file_path(const char *filename) {
 /// @brief Builds the Config Root Path, the server will read from here when looking for files
 /// @return Parsed file path, the root for which the servers accessable files are
 const char *parse_config_root_path(void){
-    global_config_t *gloabl_config = get_global_config_structure();
-
-    const char *root_key = gloabl_config->root;
-    if (!root_key){
-        fprintf(stderr, FATAL "No root key provided, or is unreadable.\n");
-        return NULL;
+    global_config_t *global_config = get_global_config_structure();
+    if (!global_config) {
+        fprintf(stderr, FATAL "Global config not initialized\n");
+        return "";
     }
 
-    char total_path[PATH_MAX];
-    strncpy(total_path, root_key, sizeof(total_path) - 1);
-    total_path[sizeof(total_path) - 1] = '\0';
+    const char *root_key = global_config->root;
+    if (!root_key || !*root_key){
+        fprintf(stderr, FATAL "No root key provided, or it is empty.\n");
+        return "";
+    }
 
     static char parsed_path[PATH_MAX];
-    if (total_path[0] == '~'){
+    if (root_key[0] == '~'){
         const char *home_path = get_home_path();
-        snprintf(parsed_path, sizeof(parsed_path), "%s%s", home_path, total_path + 1);
-    }else{
-        strcpy(parsed_path, total_path);
+        snprintf(parsed_path, sizeof(parsed_path), "%s%s", home_path, root_key + 1);
+    } else {
+        strncpy(parsed_path, root_key, sizeof(parsed_path) - 1);
+        parsed_path[sizeof(parsed_path) - 1] = '\0';
     }
-    
-    free(gloabl_config);
+
+    //remove trailing slashes
+    size_t len = strlen(parsed_path);
+    while (len > 1 && parsed_path[len - 1] == '/') parsed_path[--len] = '\0';
+
     return parsed_path;
 }
 
