@@ -62,10 +62,15 @@ char *file_get_value(const char *file, const char *key){
     const char *pos = strstr(file, pattern);
     if (!pos) {
         fprintf(stderr, ERROR "Config key not found: %s\n", key);
+        exit(1);
         return NULL;
     }
 
     pos += strlen(pattern);
+
+    // if something is empty it segfaults here! fix it!
+    // NOTE BY GLIDE: can't really prevent a segfault because these aren't optional
+    // so the best option is to just exit.
 
     // Find the end of the line
     const char *end = strchr(pos, '\n');
