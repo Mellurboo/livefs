@@ -7,6 +7,7 @@
 #include <filesystem/filepath.h>
 #include <filesystem/read_file.h>
 #include <config/global_config/create_global_config.h>
+#include <config/global_config/global_config_file.h>
 
 /// @brief Opens the config file or creates it or calls to create it if it doesnt exsist
 /// @return returns the file pointer THE CALLER *MUST* CLOSE IT!
@@ -45,7 +46,7 @@ static char *get_config_file_dir() {
 /// @brief trims config file whitespace, realloc the buffer
 /// @return returns new pointer to config file
 char *get_config_file(){
-    char *config_file = (read_file(open_file(get_config_file_dir())));
+    char *config_file = (read_file(get_config_file_dir()));
     if (!config_file) return NULL;
 
     char *trimmed_config = trim_whitespaces(config_file);
@@ -54,4 +55,13 @@ char *get_config_file(){
     }
     
     return trimmed_config;
+}
+
+/// @brief free the config file structure
+/// @param config_file config context
+void clear_config(global_config_t *config_file){
+    free((void *)config_file->root);
+    free((void *)config_file->ssl_cert_path);
+    free((void *)config_file->ssl_key_path);
+    free(config_file);
 }

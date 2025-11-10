@@ -19,3 +19,7 @@ char *get_config_file();
 
 global_config_t *create_global_config_structure();
 global_config_t *get_global_config_structure();
+
+/// @brief free the config file structure
+/// @param config_file config context
+void clear_config(global_config_t *config_file);

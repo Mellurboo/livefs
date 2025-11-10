@@ -81,6 +81,6 @@ int main(int argc, const char *argv[]){
     client_listener(server_socket);
 
     // Clean up, at this point the server is closed
-    free(global_config);
+    clear_config(global_config);
     close(server_socket);
 }

@@ -113,7 +113,7 @@ const char *cache_get_file(file_cache_t *cache, const char *path, size_t *size_o
 
     size_t filesize = get_filesize(fp);
 
-    char *file = read_file(fp);
+    char *file = read_file(path);
     if (!file) return NULL;
     // End blocking code
 

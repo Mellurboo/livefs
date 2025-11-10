@@ -23,12 +23,11 @@ ssize_t get_filesize(FILE *fp){
     return filesize;
 }
 
-FILE *open_file(const char* directory_path){
-    if (!directory_path) return NULL;
-    printf("%s\n", directory_path);
-    FILE *fp = fopen(directory_path, "rb");
+FILE *open_file(const char* filepath){
+    if (!filepath) return NULL;
+    FILE *fp = fopen(filepath, "rb");
     if (!fp){
-        fprintf(stderr, ERROR "Failure to open file: %s\n", directory_path);
+        fprintf(stderr, ERROR "Failure to open file: %s\n", filepath);
         return NULL;
     }
 
@@ -38,8 +37,11 @@ FILE *open_file(const char* directory_path){
 /// @brief Reads the file and places it in memory, Must be freed by the caller
 /// @param directory_path 
 /// @return 
-char *read_file(FILE *fp){
+char *read_file(const char *path){
+    if (!path) return NULL;
+    FILE *fp = open_file(path);
     if (!fp) return NULL;
+
     size_t filesize = get_filesize(fp);
     char *file = malloc(filesize + 1);
     if (!file){
