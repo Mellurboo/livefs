@@ -50,6 +50,7 @@ void client_handler(void* fd_void) {
         requestread = SSL_read(ssl, request, BUFFER_SIZE - 1);
 
     }else if (global_config->allow_insecure_connections){
+        gtblockfd(client_socket, GTBLOCKIN);
         requestread = async_recv(client_socket, request, BUFFER_SIZE - 1, 0);
     }else{
         http_forbidden(client_socket);
