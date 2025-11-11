@@ -1,14 +1,15 @@
-#include <utils/terminal.h>
-#include <socket/socket.h>
-#include <vendor/gt/gt.h>
-#include <filesystem/send.h>
-#include <utils/tls.h>
-#include <utils/time.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <utils/tls.h>
+#include <utils/time.h>
 #include <openssl/err.h>
+#include <vendor/gt/gt.h>
+#include <socket/socket.h>
 #include <protocol/http.h>
+#include <utils/terminal.h>
+#include <filesystem/send.h>
+#include <socket/async/async.h>
 
 
 #define BUFFER_SIZE     1024
@@ -49,8 +50,7 @@ void client_handler(void* fd_void) {
         requestread = SSL_read(ssl, request, BUFFER_SIZE - 1);
 
     }else if (global_config->allow_insecure_connections){
-        gtblockfd(client_socket, GTBLOCKIN);
-        requestread = recv(client_socket, request, BUFFER_SIZE - 1, 0);
+        requestread = async_recv(client_socket, request, BUFFER_SIZE - 1, 0);
     }else{
         http_forbidden(client_socket);
     }

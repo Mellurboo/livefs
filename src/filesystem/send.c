@@ -14,10 +14,11 @@
 #include <protocol/http.h>
 #include <utils/terminal.h>
 #include <filesystem/send.h>
+#include <socket/async/async.h>
 #include <filesystem/filepath.h>
 #include <filesystem/read_file.h>
-#include <filesystem/cache/filecache.h>
 #include <socket/request_arguement.h>
+#include <filesystem/cache/filecache.h>
 #include <config/descriptor/descriptor_file.h>
 #include <config/global_config/global_config_file.h>
 
@@ -103,7 +104,7 @@ ssize_t send_data(int client_socket, SSL *ssl, const void *data, size_t size){
         }
         return w;
     }else{
-        return send(client_socket, data, size, 0);
+        return async_send(client_socket, data, size, 0);
     }
 }
 
