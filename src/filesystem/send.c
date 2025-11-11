@@ -91,6 +91,8 @@ void send_buffered_bytes(int client_socket, SSL *ssl, const char *data, size_t s
         }
 
         sent += w;
+
+        gtblockfd(client_socket, GTBLOCKOUT);
     }
 }
 
