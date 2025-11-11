@@ -8,7 +8,7 @@
 #define BUFFER_SIZE     1024
 
 int is_secured_connection(int client_socket){
-    unsigned char tls_signature[1];
+    unsigned char tls_signature[1] = {0};
     int byte = async_recv(client_socket, tls_signature, 1, MSG_PEEK);
     if (byte <= 0) return 0;
     return tls_signature[0] == 0x16;

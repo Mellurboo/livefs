@@ -15,7 +15,7 @@ global_config_t *create_global_config_structure(){
     if (!config_file){
         fprintf(stderr, FATAL "Config File Not Found\n");
     }
-
+    
     global_config = malloc(sizeof(global_config_t));
     memset(global_config, 0, sizeof(global_config_t));
     
