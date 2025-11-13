@@ -1,6 +1,4 @@
-#define _POSIX_C_SOURCE 200809L
-#include <time.h>
-
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -14,20 +12,15 @@
 #include <protocol/http.h>
 #include <utils/terminal.h>
 #include <filesystem/send.h>
+#include <socket/async/async.h>
 #include <filesystem/filepath.h>
 #include <filesystem/read_file.h>
-#include <filesystem/cache/filecache.h>
 #include <socket/request_arguement.h>
+#include <filesystem/cache/filecache.h>
 #include <config/descriptor/descriptor_file.h>
 #include <config/global_config/global_config_file.h>
 
 #define BUFFER_SIZE 1024
-
-static inline uint64_t now_ns(void) {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (uint64_t)ts.tv_sec * 1000000000ull + ts.tv_nsec;
-}
 
 request_t *parse_request_structure(int client_socket, const char *request_line){
     request_t *request = calloc(1, sizeof(request_t));
@@ -90,20 +83,22 @@ void send_buffered_bytes(int client_socket, SSL *ssl, const char *data, size_t s
         }
 
         sent += w;
+
+        gtblockfd(client_socket, GTBLOCKOUT);
     }
 }
 
 ssize_t send_data(int client_socket, SSL *ssl, const void *data, size_t size){
     if (ssl){
-        size_t w = SSL_write(ssl, data, size);
+        size_t w = ssl_async_write(ssl, data, size);
         if (w <= 0){
             int err = SSL_get_error(ssl, w);
-            fprintf(stderr, ERROR "SSL Error: %i", err);
+            fprintf(stderr, ERROR "SSL Error: %i\n", err);
             return -1;
         }
         return w;
     }else{
-        return send(client_socket, data, size, 0);
+        return async_send(client_socket, data, size, 0);
     }
 }
 
@@ -111,7 +106,6 @@ ssize_t send_data(int client_socket, SSL *ssl, const void *data, size_t size){
 /// @param client_sock client socket
 /// @param request_line full HTTP request
 void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
-    uint64_t start = now_ns();
     request_t *request = parse_request_structure(client_socket, request_line);
 
     if (!request){
@@ -191,16 +185,12 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
             return;
         }
     }
-
+    
     const char *success_header = http_success(basename(filename), filesize, request_has_arguement(request->path, "download"));
     send_data(client_socket, ssl, success_header, strlen(success_header));
 
-    uint64_t end = now_ns();
-    uint64_t delta_ns = end - start;
-    double delta_ms = delta_ns / 1e6;
-
     send_buffered_bytes(client_socket, ssl, filedata, filesize);
-    printf(SUCREQUEST "Served file '%s' to Client, the request took %.3f ms\n", file_path, delta_ms);
+    printf(SUCREQUEST "Served file '%s' to Client\n", file_path);
     
     free(request);
     free(descriptor);

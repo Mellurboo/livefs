@@ -1,21 +1,32 @@
-#include <utils/terminal.h>
-#include <socket/socket.h>
-#include <vendor/gt/gt.h>
-#include <filesystem/send.h>
-#include <utils/tls.h>
-#include <utils/time.h>
+#define _POSIX_C_SOURCE 200809L
+#include <time.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <utils/tls.h>
+#include <utils/time.h>
 #include <openssl/err.h>
+#include <vendor/gt/gt.h>
+#include <socket/socket.h>
 #include <protocol/http.h>
+#include <utils/terminal.h>
+#include <filesystem/send.h>
+#include <socket/async/async.h>
 
 
 #define BUFFER_SIZE     1024
 
+static inline uint64_t now_ns(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000000000ull + ts.tv_nsec;
+}
+
+
 /// @brief Handles the client request and closing it when appropriate
 /// @param fd_void file descriptor
 void client_handler(void* fd_void) {
+    uint64_t start = now_ns();
     printf("\n%sRequest Start %s", INFO, get_current_server_time());
     
     global_config_t *global_config = get_global_config_structure();
@@ -43,14 +54,15 @@ void client_handler(void* fd_void) {
             return;
         }
 
+        SSL_CTX_set_session_cache_mode(ssl_ctx, SSL_SESS_CACHE_SERVER);
+
         const SSL_CIPHER *cipher = SSL_get_current_cipher(ssl);
         printf(SUCCESS "Cipher: '%s'\n", SSL_CIPHER_get_name(cipher));
-        gtblockfd(client_socket, GTBLOCKIN);
-        requestread = SSL_read(ssl, request, BUFFER_SIZE - 1);
+        requestread = ssl_async_read(ssl, request, BUFFER_SIZE - 1);
 
     }else if (global_config->allow_insecure_connections){
         gtblockfd(client_socket, GTBLOCKIN);
-        requestread = recv(client_socket, request, BUFFER_SIZE - 1, 0);
+        requestread = async_recv(client_socket, request, BUFFER_SIZE - 1, 0);
     }else{
         http_forbidden(client_socket);
     }
@@ -69,6 +81,11 @@ void client_handler(void* fd_void) {
         SSL_shutdown(ssl);
         SSL_free(ssl);
     }
+
+    uint64_t end = now_ns();
+    uint64_t delta_ns = end - start;
+    double delta_ms = delta_ns / 1e6;
+    printf("Request Took %.3fms", delta_ms);
 
     close(client_socket);
 }

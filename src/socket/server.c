@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -28,6 +29,9 @@ int server_create_socket(void) {
         fprintf(stderr, FATAL "Error creating socket: %s:%d\n", __FILE__, __LINE__);
         exit(-1);
     }
+
+    int flags = fcntl(server_socket, F_GETFL, 0);
+    fcntl(server_socket, F_SETFL, flags | O_NONBLOCK);
 
     if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         perror("setsockopt");

@@ -1,0 +1,43 @@
+#pragma once
+#include <unistd.h>
+#include <openssl/ssl.h>
+
+/// @brief Non blocking insecure sendfile
+/// @param client_socket client
+/// @param file_fd file descriptor
+/// @param offset offset
+/// @param count count
+/// @return success -1 for err
+ssize_t async_sendfile(int client_socket, int file_fd, off_t *offset, size_t count);
+
+/// @brief non-blocking send wrapper
+/// @param client_socket client socket
+/// @param data data in buffer
+/// @param data_size data size
+/// @param flags flags
+/// @return return data sent size
+ssize_t async_send(int client_socket, const void *data, size_t data_size, int flags);
+
+/// @brief non-blocking data recieve wrapper
+/// @param client_socket client socket
+/// @param read_buf read in buffer
+/// @param read_size read size
+/// @param flags flags
+/// @return success / error
+ssize_t async_recv(int client_socket, void *read_buf, size_t read_size, int flags);
+
+/// @brief non-blocking SSL Aware send wrapper
+/// @param client_socket client socket
+/// @param data data in buffer
+/// @param data_size data size
+/// @param flags flags
+/// @return return data sent size
+ssize_t ssl_async_write(SSL *ssl, const void *data, size_t data_size);
+
+/// @brief non-blocking SSL Aware data recieve wrapper
+/// @param client_socket client socket
+/// @param read_buf read in buffer
+/// @param read_size read size
+/// @param flags flags
+/// @return success / error
+ssize_t ssl_async_read(SSL *ssl, void *read_buf, size_t read_size);
