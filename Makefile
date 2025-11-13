@@ -18,7 +18,7 @@ CC ?= gcc
 # Flag Options for Compilers
 #
 CFLAGS ?=
-COMMON_CFLAGS = -Wall -Wextra -pedantic -Werror -Wno-unused-function -Wno-unused-but-set-parameter -Wno-unused-parameter -luring -O3 -D_FILE_OFFSET_BITS=64 -I include -g
+COMMON_CFLAGS = -Wall -Wextra -pedantic -Werror -Wno-unused-function -Wno-unused-but-set-parameter -Wno-unused-parameter -luring -O2 -D_FILE_OFFSET_BITS=64 -I include -g
 
 #
 # Runtime arguments
