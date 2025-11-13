@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <vendor/gt/gt.h>
 #include <utils/terminal.h>
+#include <socket/async/async.h>
 #include <filesystem/filepath.h>
 #include <filesystem/read_file.h>
 #include <filesystem/cache/filecache.h>
@@ -107,15 +108,9 @@ const char *cache_get_file(file_cache_t *cache, const char *path, size_t *size_o
 
     gtmutex_unlock(&cache->threadlock);
 
-    //TODO: Move this over to a different usermode thread as its blocking
-    FILE *fp = open_file(path);
-    if (!fp) return NULL;
-
-    size_t filesize = get_filesize(fp);
-
-    char *file = read_file(path);
+    size_t filesize = 0;
+    char *file = read_file(path, &filesize);
     if (!file) return NULL;
-    // End blocking code
 
     gtmutex_lock(&cache->threadlock);
     if (cache->count >= cache->capacity){
@@ -134,12 +129,11 @@ const char *cache_get_file(file_cache_t *cache, const char *path, size_t *size_o
     entry->last_modified = st.st_mtime;
 
     *size_out = entry->size;
-    printf(INFO "Created cache for file '%s' in %s at cache index [%zu] (%zu bytes)\n",
+    printf(INFO "Created cache for file '%s' in %s at cache index [%zu] (%ld bytes)\n",
        path, 
        (cache == &file_data_cache) ? "file_data_cache" : "directory_descriptor_cache",
        cache->count - 1,
        filesize);
-    const char *retdata = entry->data;
     gtmutex_unlock(&cache->threadlock);
-    return retdata;
+    return entry->data;
 }

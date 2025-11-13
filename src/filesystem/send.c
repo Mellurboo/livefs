@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -92,7 +93,7 @@ ssize_t send_data(int client_socket, SSL *ssl, const void *data, size_t size){
         size_t w = ssl_async_write(ssl, data, size);
         if (w <= 0){
             int err = SSL_get_error(ssl, w);
-            fprintf(stderr, ERROR "SSL Error: %i", err);
+            fprintf(stderr, ERROR "SSL Error: %i\n", err);
             return -1;
         }
         return w;
@@ -184,7 +185,7 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
             return;
         }
     }
-
+    
     const char *success_header = http_success(basename(filename), filesize, request_has_arguement(request->path, "download"));
     send_data(client_socket, ssl, success_header, strlen(success_header));
 

@@ -2,6 +2,14 @@
 #include <unistd.h>
 #include <openssl/ssl.h>
 
+/// @brief Non blocking insecure sendfile
+/// @param client_socket client
+/// @param file_fd file descriptor
+/// @param offset offset
+/// @param count count
+/// @return success -1 for err
+ssize_t async_sendfile(int client_socket, int file_fd, off_t *offset, size_t count);
+
 /// @brief non-blocking send wrapper
 /// @param client_socket client socket
 /// @param data data in buffer
