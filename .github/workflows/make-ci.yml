@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: LivefsCI
 
 on:
   push:
@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -16,10 +15,41 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y build-essential liburing-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential liburing-dev curl
 
     - name: Build project (64-bit)
       run: make
+
+    - name: Start livefs
+      run: |
+        ./livefs64 &                # run your server in the background
+        SERVER_PID=$!             # save the PID
+        echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+
+        # Wait for server to be ready
+        sleep 1
+
+    - name: Run curl request test
+      run: |
+        echo "Testing server with curl..."
+
+        # Change URL as needed
+        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+
+        echo "HTTP Response Code: $RESPONSE"
+
+        if [ "$RESPONSE" != "200" ]; then
+          exit 1
+        fi
+
+    # Stop server after test
+    - name: Stop server
+      if: always()
+      run: |
+        echo "Stopping server..."
+        kill $SERVER_PID || true
 
     - name: Clean build artifacts
       run: make clean
