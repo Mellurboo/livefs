@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <config/read_key.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,7 +10,7 @@
 global_config_t *global_config = {0};
 
 global_config_t *create_global_config_structure(){
-    char *config_file = strdup(get_config_file());
+    char *config_file = get_config_file();
     if (!config_file){
         fprintf(stderr, FATAL "Config File Not Found\n");
     }
