@@ -13,8 +13,9 @@
 #include <filesystem/send.h>
 #include <socket/async/async.h>
 
-
 #define BUFFER_SIZE     1024
+
+global_config_t *global_config_struct = NULL;
 
 static inline uint64_t now_ns(void) {
     struct timespec ts;
@@ -22,21 +23,19 @@ static inline uint64_t now_ns(void) {
     return (uint64_t)ts.tv_sec * 1000000000ull + ts.tv_nsec;
 }
 
-
 /// @brief Handles the client request and closing it when appropriate
 /// @param fd_void file descriptor
 void client_handler(void* fd_void) {
     uint64_t start = now_ns();
     printf("\n%sRequest Start %s", INFO, get_current_server_time());
     
-    global_config_t *global_config = get_global_config_structure();
     char request[BUFFER_SIZE] = {0};
     int client_socket = (uintptr_t)fd_void;
     SSL *ssl = NULL;
 
     int requestread = 0;
 
-    if (global_config->enable_ssl && is_secured_connection(client_socket)){
+    if (global_config_struct->enable_ssl && is_secured_connection(client_socket)){
         // Create SSL object for this client
         ssl = SSL_new(ssl_ctx);
         if (!ssl) {
@@ -60,7 +59,7 @@ void client_handler(void* fd_void) {
         printf(SUCCESS "Cipher: '%s'\n", SSL_CIPHER_get_name(cipher));
         requestread = ssl_async_read(ssl, request, BUFFER_SIZE - 1);
 
-    }else if (global_config->allow_insecure_connections){
+    }else if (global_config_struct->allow_insecure_connections){
         gtblockfd(client_socket, GTBLOCKIN);
         requestread = async_recv(client_socket, request, BUFFER_SIZE - 1, 0);
     }else{
@@ -85,7 +84,7 @@ void client_handler(void* fd_void) {
     uint64_t end = now_ns();
     uint64_t delta_ns = end - start;
     double delta_ms = delta_ns / 1e6;
-    printf("Request Took %.3fms", delta_ms);
+    printf(REQUEST "Request Took %.3fms\n", delta_ms);
 
     close(client_socket);
 }
@@ -94,6 +93,7 @@ void client_handler(void* fd_void) {
 /// @param server_socket server socket 
 /// @return success
 int client_listener(int server_socket) {
+    global_config_struct = get_global_config_structure();
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
     while (1) {

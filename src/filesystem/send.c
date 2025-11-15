@@ -194,4 +194,5 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
     
     free(request);
     free(descriptor);
+    return;
 }
