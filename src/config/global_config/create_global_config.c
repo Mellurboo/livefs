@@ -73,7 +73,7 @@ int create_config_file(){
         exit(-1);
     }
 
-    fprintf(fp, STANDARD_CONFIG);   // write the default config file content
+    fprintf(fp, DEFAULT_CONFIG);   // write the default config file content
     fclose(fp);
 
     return 0;
