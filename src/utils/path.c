@@ -72,7 +72,7 @@ char *get_parent_directory_path(const char *filepath){
     path_length = strlen(path);
     path[path_length] = '/';
     path[path_length + 1] = '\0';
-    
+
     return path;
 }
 
