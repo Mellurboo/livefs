@@ -7,27 +7,50 @@
 
 #define PATTERN_SIZE    128
 
-
 /// @brief gets the value of a key
 /// @param file target file
 /// @param key key name str
 /// @return key value
 char *get_key_in_file(char *pattern, const char *config_file, const char *key){
-    /*
-        Here we define the formatting must be
-        key = value
-        and it is whitespace sensitive because im lazy :p
-    */
-    snprintf(pattern, PATTERN_SIZE, "%s = ", key);
+    snprintf(pattern, PATTERN_SIZE, "%s", key);
+    const char *config_read = config_file;
 
-    // find the key in the loaded config file
-    char *pos = strstr(config_file, pattern);
-    if (!pos) {
-        fprintf(stderr, ERROR "Config key not found: %s\n", key);
-        return NULL;
+    while (*config_read){
+        if (*config_read == '#'){
+            while (*config_read && *config_read != '\n') config_read++;
+            if (*config_read == '\n') config_read++;
+            continue;
+        }
+
+        if (*config_read == '\n') {
+            config_read++;
+            continue;
+        }
+
+        if (strncmp(config_read, key, strlen(key)) == 0){
+            const char *pos = config_read + strlen(key);
+
+            // Skip whitespace before the assignment token =
+            while (*pos == ' ' || *pos == '\t') pos++;
+            
+            if (*pos != '='){
+                fprintf(stderr, ERROR "Invalid Syntax, key '%s' is missing assignment operator '='\n", key);
+                return NULL;
+            }
+
+            pos++; //skip =
+
+            while (*pos == ' ' || *pos == '\t') pos++;
+            return (char*)pos;
+        }
+
+        while (*config_read && *config_read != '\n') config_read++;
+        if (*config_read == '\n') config_read++;
+    
     }
 
-    return pos;
+    fprintf(stderr, ERROR "Failed to find key requested? '%s'", key);
+    return NULL;
 }
 
 /// @brief gets the integer value of a file passed
@@ -39,15 +62,14 @@ int file_get_int(const char *file, const char *key){
     char *pos = get_key_in_file(pattern, file, key);
     if (!pos) return 0;
 
-    // extract the value
-    pos += strlen(pattern);
-    char *endptr;
-    long value = strtol(pos, &endptr, 10);
+    char *endpointer;
+    long value = strtol(pos, &endpointer, 10);
 
-    if (pos == endptr) {
-        fprintf(stderr, ERROR "Invalid integer for key %s\n", key);
-        return 0;
+    if (pos == endpointer){
+        fprintf(stderr, ERROR "Expected Integer at key '%s'\n", key);
+        return -1;
     }
+
     return (int)value;
 }
 
@@ -57,28 +79,17 @@ int file_get_int(const char *file, const char *key){
 /// @return value of key
 char *file_get_value(const char *file, const char *key){
     char pattern[PATTERN_SIZE];
-    snprintf(pattern, sizeof(pattern), "%s = ", key);
+    char *pos = get_key_in_file(pattern, file, key);
 
-    const char *pos = strstr(file, pattern);
-    if (!pos) {
-        fprintf(stderr, ERROR "Config key not found: %s\n", key);
-        exit(1);
-        return NULL;
-    }
-
-    pos += strlen(pattern);
-
-    // if something is empty it segfaults here! fix it!
-    // NOTE BY GLIDE: can't really prevent a segfault because these aren't optional
-    // so the best option is to just exit.
-
-    // Find the end of the line
+    // extract entire line
     const char *end = strchr(pos, '\n');
-    static char temp[PATH_MAX]; // temporary buffer
-    size_t len = end ? (size_t)(end - pos) : strlen(pos);
-    if (len >= sizeof(temp)) len = sizeof(temp) - 1;
-    memcpy(temp, pos, len);
-    temp[len] = '\0';
+    static char value[PATH_MAX];
 
-    return temp;
+    size_t len = end ? (size_t)(end - pos) : strlen(pos);
+    if (len >= sizeof(value)) len = sizeof(value) - 1;
+
+    memcpy(value, pos, len);
+    value[len] = '\0';
+
+    return value;
 }

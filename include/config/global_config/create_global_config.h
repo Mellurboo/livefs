@@ -4,11 +4,11 @@
     As it stands the config file system is very primitive, for example its basically typeless and
     theres no real comment support, i suppose its fast enough? but it only runs on start anyway,
 
-    at some point I will add comment support so large comments are skipped at parsing :)
     when it comes to types we basically only have VALUE or INT because they're the only two really important ones
     everything can be represented as a VALUE (basically a string) or an INT
 
     I have no intention in adding boolean stuff because even livefs doesnt use booleans
+    
 */
 static const char DEFAULT_CONFIG[] =
     "# Generic Settings - Livefs Configuration File\n"
