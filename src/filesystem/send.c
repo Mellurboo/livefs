@@ -73,16 +73,23 @@ void send_buffered_bytes(int client_socket, SSL *ssl, const char *data, size_t s
     size_t sent = 0;
 
     while (sent < size){
-        size_t chunk = (size - sent > BUFFER_SIZE) ? BUFFER_SIZE : (size - sent);
+        size_t remaining = size - sent;
+        size_t chunk = (remaining > (size_t)BUFFER_SIZE) ? (size_t)BUFFER_SIZE : remaining;
+        
         memcpy(databuffer, data + sent, chunk);
-
         ssize_t w = send_data(client_socket, ssl, databuffer, chunk);
-        if (w <= 0){
-            fprintf(stderr, ERROR "Error sending data\n");
+        
+        if (w < 0){
+            fprintf(stderr, ERROR "sending data, send_data = %zd", w);
             break;
         }
 
-        sent += w;
+        if ((size_t) w > chunk){
+            fprintf(stderr, WARN "send_data returned more data than expected, %zd, requested only %zu this isnt fatal but indicitive of something catastrophic?\n", w, chunk);
+            w = (ssize_t)chunk;
+        }
+
+        sent += (size_t)w;
 
         gtblockfd(client_socket, GTBLOCKOUT);
     }
