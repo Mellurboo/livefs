@@ -32,7 +32,7 @@ static ssize_t cache_find_entry(file_cache_t *cache, const char *path){
 /// @brief creates a new cache context of size
 /// @param capacity context size
 /// @return file cache context pointer
-void cache_new(file_cache_t *cache, size_t capacity){
+file_cache_t *cache_new(file_cache_t *cache, size_t capacity){
     memset(cache, 0, sizeof(*cache));
     cache->entries = calloc(capacity, sizeof(file_cache_entry_t));
     if (!cache->entries) {
@@ -41,6 +41,7 @@ void cache_new(file_cache_t *cache, size_t capacity){
     }
     cache->capacity = capacity;
     gtmutex_init(&cache->threadlock);
+    return cache;
 }
 
 /// @brief free a cache context and all of its entries
@@ -59,7 +60,6 @@ void cache_free(file_cache_t *cache){
 
     free(cache->entries);
     gtmutex_unlock(&cache->threadlock);
-    free(cache);
 }
 
 /// @brief Clear the cache, reuable after as we dont the file cache itself, just entries.

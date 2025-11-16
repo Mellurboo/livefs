@@ -7,7 +7,6 @@
 
 #define PATTERN_SIZE    128
 
-
 /// @brief gets the value of a key
 /// @param file target file
 /// @param key key name str
