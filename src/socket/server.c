@@ -82,6 +82,11 @@ int initSSL(global_config_t *global_config, int server_socket){
 void server_bind_socket(int port, int server_socket){
     memset(&server_addr, 0, sizeof(server_addr));
 
+    if (port == -1) {
+        fprintf(stderr, FATAL "Invalid or missing port value this error is fatal\n");
+        exit(-1);
+    }
+
     server_addr.sin_family      = AF_INET;
     server_addr.sin_port        = htons(port);
     server_addr.sin_addr.s_addr = INADDR_ANY;

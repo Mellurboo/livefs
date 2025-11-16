@@ -81,6 +81,10 @@ char *file_get_value(const char *file, const char *key){
     char pattern[PATTERN_SIZE];
     char *pos = get_key_in_file(pattern, file, key);
 
+    if (*pos == '\n' || *pos == '\0'){
+        return "";
+    }
+
     // extract entire line
     const char *end = strchr(pos, '\n');
     static char value[PATH_MAX];

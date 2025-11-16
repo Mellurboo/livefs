@@ -59,7 +59,7 @@ void client_handler(void* fd_void) {
         printf(SUCCESS "Cipher: '%s'\n", SSL_CIPHER_get_name(cipher));
         requestread = ssl_async_read(ssl, request, BUFFER_SIZE - 1);
 
-    }else if (global_config_struct->allow_insecure_connections){
+    }else if (global_config_struct->allow_insecure_HTTP_connections){
         gtblockfd(client_socket, GTBLOCKIN);
         requestread = async_recv(client_socket, request, BUFFER_SIZE - 1, 0);
     }else{

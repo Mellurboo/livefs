@@ -5,9 +5,11 @@ typedef struct{
     char *root;
 
     int enable_ssl;
-    int allow_insecure_connections;
+    int allow_insecure_HTTP_connections;
     const char *ssl_cert_path;
     const char *ssl_key_path;
+
+    int enforce_descriptor_files;
 }global_config_t;
 
 extern global_config_t *global_config;
