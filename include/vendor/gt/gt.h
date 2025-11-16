@@ -29,7 +29,7 @@ typedef struct {
     uint32_t epoll_events;
 } GThread;
 
-GThread *gtinit(void);
+void gtinit(void);
 void gtyield(void);
 void gtgo(void (*entry)(void* arg), void* arg);
 GThread* gthread_current(void);
@@ -55,9 +55,13 @@ void gtmutex_unlock(GTMutex* mutex);
 #include <assert.h>
 #include <errno.h>
 
-#include <sys/epoll.h>
-#include <sys/mman.h>
-#include <unistd.h>
+#ifdef _WIN32
+
+#else
+# include <sys/epoll.h>
+# include <sys/mman.h>
+#endif
+
 
 static void gtlist_init(gtlist_head *list) {
     list->next = list->prev = list;
@@ -189,6 +193,30 @@ void __attribute__((naked)) gtyield(void) {
         "ret"
     );
 #elif defined(__x86_64__)
+# ifdef _WIN32
+    asm(
+        "push %rbp\n"
+        "push %rbx\n"
+        "push %r12\n"
+        "push %r13\n"
+        "push %r14\n"
+        "push %r15\n"
+        "push %rsi\n"
+        "push %rdi\n"
+        "movq %rsp, %rcx\n"
+        "call gtswitch\n"
+        "mov %rax, %rsp\n"
+        "pop %rdi\n"
+        "pop %rsi\n"
+        "pop %r15\n"
+        "pop %r14\n"
+        "pop %r13\n"
+        "pop %r12\n"
+        "pop %rbx\n"
+        "pop %rbp\n"
+        "ret"
+    );
+# else
     asm(
         "push %rbp\n"
         "push %rbx\n"
@@ -207,6 +235,7 @@ void __attribute__((naked)) gtyield(void) {
         "pop %rbp\n"
         "ret"
     );
+# endif
 #elif defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
     asm(
         "push %ebp\n"
@@ -236,21 +265,25 @@ static void* gtsetup_frame(void* sp_void) {
     memset(sp, 0, 14*sizeof(uintptr_t));
     sp[13] = (uintptr_t)gtprelude;
 #elif defined(__x86_64__)
-    *(--sp) = 0; // Reserve some memory for alignment
-    *(--sp) = (uintptr_t)gtprelude;
-    *(--sp) = 0; // rbp
-    *(--sp) = 0; // rbx
-    *(--sp) = 0; // r12
-    *(--sp) = 0; // r13
-    *(--sp) = 0; // r14
-    *(--sp) = 0; // r15
+    *(--sp) = 0; // Reserve some memory for alignment :O
+    *(--sp) = (uintptr_t)gtprelude; // rip
+    *(--sp) = 0;         // rbp
+    *(--sp) = 0;         // rbx
+    *(--sp) = 0;         // r12
+    *(--sp) = 0;         // r13
+    *(--sp) = 0;         // r14
+    *(--sp) = 0;         // r15
+# ifdef _WIN32
+    *(--sp) = 0;         // rsi
+    *(--sp) = 0;         // rdi
+# endif
 #elif defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
-    *(--sp) = 0;
-    *(--sp) = (uintptr_t)gtprelude;
-    *(--sp) = 0; // ebp
-    *(--sp) = 0; // ebx
-    *(--sp) = 0; // esi
-    *(--sp) = 0; // edi
+    *(--sp) = 0; // Reserve some memory for alignment :O
+    *(--sp) = (uintptr_t)gtprelude; // rip
+    *(--sp) = 0;         // ebp
+    *(--sp) = 0;         // ebx
+    *(--sp) = 0;         // esi
+    *(--sp) = 0;         // edi
 #else
 # error "Please port gtsetup_frame to your unknown Architecture"
 #endif
@@ -258,64 +291,35 @@ static void* gtsetup_frame(void* sp_void) {
 }
 // End Architecture specific
 #define GT_STACK_SIZE (16 * 4096)
-
-void gtshutdown(void){
-    // buckets, go thru them all and free
-    GPollMap *pmap = &scheduler.pollmap;
-
-    for (size_t i = 0; i < pmap->buckets.len; i++){
-        GPollBucket *b = pmap->buckets.items[i];
-        while(b){
-            GPollBucket *n = b->next;
-            free(b);
-            b = n;
-        }
-    }
-
-    free(pmap->buckets.items);
-    pmap->buckets.items = NULL;
-    pmap->buckets.len = 0;
-    pmap->len = 0;
-
-    // free dead threads
-    while(!gtlist_empty(&scheduler.dead)){
-        gtlist_head *hnext = scheduler.dead.next;
-        gtlist_remove(hnext);
-        GThread *t = (GThread *) hnext;
-        free(t);
-    }
-
-    // clear sched queue
-    while (!gtlist_empty(&scheduler.queue)){
-        gtlist_head *hnext = scheduler.queue.next;
-        gtlist_remove(hnext);
-        GThread *t = (GThread *) hnext;
-        free(t);
-    }
-
-    // close epoll
-    if (scheduler.epoll > 0){
-        close((int)scheduler.epoll);
-        scheduler.epoll = -1;
-    }
-
-    memset(&scheduler, 0, sizeof(scheduler));
-}
-
+// TODO: Maybe handle out of memory gracefully? I'm not too sure
 void gtgo(void (*entry)(void* arg), void* arg) {
     GThread* thread;
     if(gtlist_empty(&scheduler.dead)) {
         thread = malloc(sizeof(GThread));
         assert(thread && "Ran out of memory");
         gtlist_init(&thread->list);
-
-        void* stack = mmap(NULL, GT_STACK_SIZE, PROT_READ | PROT_WRITE,
-                           MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        if(stack == MAP_FAILED) {
+    #ifdef _MINOS
+        intptr_t e = heap_create(0, NULL, GT_STACK_SIZE);
+        assert(e >= 0 && "Ran out of memory");
+        MinOSHeap heap = { 0 };
+        assert(heap_get((uintptr_t)e, &heap) >= 0);
+        // Stack grows backwards:
+        thread->sp_base = heap.address + heap.size; 
+    #elif _WIN32
+        thread->sp_base = VirtualAlloc(NULL, GT_STACK_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        if (thread->sp == NULL) {
+            fprintf(stderr, "VirtualAlloc failed: %lu\n", GetLastError());
+            exit(1);
+        }
+        thread->sp_base = (char*)thread->sp + GT_STACK_SIZE;
+    #else
+        thread->sp_base = mmap(NULL, GT_STACK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        if(thread->sp == MAP_FAILED) {
             perror("mmap stack");
             exit(1);
         }
-        thread->sp_base = (void*)((char*)stack + GT_STACK_SIZE);
+        thread->sp_base = (void *)((char *)thread->sp_base + GT_STACK_SIZE);
+    #endif
     } else {
         thread = (GThread*)scheduler.dead.next;
         gtlist_remove(&thread->list);
@@ -325,26 +329,29 @@ void gtgo(void (*entry)(void* arg), void* arg) {
     thread->arg = arg;
     gtlist_insert(&scheduler.queue, &thread->list);
 }
-
+// TODO: gtpurge function that purges all dead threads
 void* gtswitch(void* sp) {
-    gthread_current()->sp = sp;
+    gthread_current()->sp = sp; // Save the last context
     if(scheduler.pollmap.len > 0) {
         int timeout = 0;
+        // TODO: maybe allow threads to register a timeout.
+        // for our purposes its fine but in general it might be useful :)
         if(gtlist_empty(&scheduler.queue)) timeout = -1;
         do {
             struct epoll_event events[128];
             int n;
             do {
-                n = epoll_wait(scheduler.epoll, events,
-                               sizeof(events)/sizeof(*events), timeout);
+            n = epoll_wait(
+    #ifdef _WIN32
+                (HANDLE)
+    #endif            
+                scheduler.epoll, events, sizeof(events)/sizeof(*events), timeout);
             } while (n < 0 && errno == EINTR);
             assert(n >= 0);
             for(size_t i = 0; i < (size_t)n; ++i) {
                 GPollBucket* bucket = events[i].data.ptr;
                 gtlist_head* next;
-                for(gtlist_head* head = bucket->threads.next;
-                    head != &bucket->threads; head = next)
-                {
+                for(gtlist_head* head = bucket->threads.next; head != &bucket->threads; head = next) {
                     next = head->next;
                     GThread* thread = (GThread*)head;
                     if(thread->epoll_events & events[i].events) {
@@ -361,20 +368,25 @@ void* gtswitch(void* sp) {
                     free(gpoll_map_remove(&scheduler.pollmap, bucket->fd));
                     op = EPOLL_CTL_DEL;
                 }
-                if(epoll_ctl(scheduler.epoll, op, fd, &ev) < 0) {
+                if(epoll_ctl(
+    #ifdef _WIN32
+                (HANDLE)
+    #endif
+                    scheduler.epoll, op, fd, &ev) < 0) {
                     perror("mod/del fd in epoll");
                     exit(1);
                 }
+                // gtlist_remove(&ethread->list);
+                // gtlist_insert(&ethread->list, &scheduler.queue);
             }
         } while(gtlist_empty(&scheduler.queue));
     }
     GThread* thread = (GThread*)gtlist_next(&scheduler.queue);
     gtlist_remove(&thread->list);
-    gtlist_insert(&scheduler.queue, &thread->list);
+    gtlist_insert(&scheduler.queue, &thread->list); // <- Add it to the end
     scheduler.thread_current = thread;
     return thread->sp;
 }
-
 static void gtprelude(void) {
     GThread* thread = gthread_current();
     thread->entry(thread->arg);
@@ -387,10 +399,14 @@ static void gtprelude(void) {
 void gtblockfd(unsigned int fd, uint32_t events) {
     GThread* thread = gthread_current();
     thread->epoll_events = 0;
+#ifdef _WIN32
+    thread->epoll_events |= EPOLLHUP | EPOLLERR;
+#endif
     if(events & GTBLOCKIN)  thread->epoll_events |= EPOLLIN;
     if(events & GTBLOCKOUT) thread->epoll_events |= EPOLLOUT;
     assert(thread->epoll_events);
-
+    // TODO: Find a way to reuse this sheizung instead of adding and removing it.
+    // Its cheap to add and remove but still.
     GPollBucket* bucket = gpoll_map_insert(&scheduler.pollmap, fd);
     assert(bucket);
     int op = EPOLL_CTL_MOD;
@@ -400,7 +416,11 @@ void gtblockfd(unsigned int fd, uint32_t events) {
         struct epoll_event ev;
         ev.events = bucket->epoll_events;
         ev.data.ptr = bucket;
-        if(epoll_ctl(scheduler.epoll, op, fd, &ev) < 0) {
+        if(epoll_ctl(
+#ifdef _WIN32
+            (HANDLE)
+#endif
+            scheduler.epoll, op, fd, &ev) < 0) {
             perror("adding fd in epoll");
             exit(1);
         }
@@ -410,11 +430,10 @@ void gtblockfd(unsigned int fd, uint32_t events) {
     gtlist_insert(&bucket->threads, &thread->list);
     gtyield();
 }
-
-GThread *gtinit(void) {
+void gtinit(void) {
     gtlist_init(&scheduler.queue);
     gtlist_init(&scheduler.dead);
-    intptr_t e = epoll_create1(0);
+    intptr_t e = (intptr_t)epoll_create1(0);
     assert(e >= 0);
     scheduler.epoll = e;
     GThread* main_thread = malloc(sizeof(GThread));
@@ -423,9 +442,7 @@ GThread *gtinit(void) {
     gtlist_init(&main_thread->list);
     gtlist_insert(&scheduler.queue, &main_thread->list);
     scheduler.thread_current = main_thread;
-    return main_thread;
 }
-
 void gtmutex_init(GTMutex* mutex) {
     mutex->lock = false;
     gtlist_init(&mutex->list);

@@ -31,17 +31,10 @@
     Obviously I will want to have other standard arguments like '--help' ect...
 */
 
-static GThread *main_thread;
-
 /// @brief this code executes when the server catches an exit signal
 void exitcall(void){
     printf(INFO "livefs has closed\n");
     close(get_server_socket());
-    clear_config(global_config);
-    server_free_all_cache();
-    gtshutdown();
-
-    if (main_thread) free(main_thread);
 }
 
 /// Gets the server socket
@@ -69,7 +62,7 @@ int main(int argc, const char *argv[]){
     printf(SUCCESS "Registered Config File\n");
     path_exists(global_config->root);
 
-    main_thread = gtinit();
+    gtinit();
 
     int srvport = global_config->port;
     server_socket = server_create_socket();
@@ -87,6 +80,7 @@ int main(int argc, const char *argv[]){
     server_listen(server_socket);
     client_listener(server_socket);
 
-    // exit, atexit will handle the rest
-    exit(0);
+    // Clean up, at this point the server is closed
+    clear_config(global_config);
+    close(server_socket);
 }
