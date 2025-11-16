@@ -5,9 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <utils/terminal.h>
+#include <string.h>
 
-char *read_file(const char *path, size_t *out_size){
-    struct io_uring ring;
+const char *read_file(const char *path, size_t *out_size){
+    struct io_uring ring = {0};
     io_uring_queue_init(8, &ring, 0);
 
     int fd = open(path, O_RDONLY);
@@ -45,5 +46,8 @@ char *read_file(const char *path, size_t *out_size){
     io_uring_cqe_seen(&ring, cqe);
     io_uring_queue_exit(&ring);
     close(fd);
-    return buf;
+
+    char *content = strdup(buf);
+    free(buf);
+    return content;
 }

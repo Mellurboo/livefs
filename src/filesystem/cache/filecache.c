@@ -59,7 +59,6 @@ void cache_free(file_cache_t *cache){
 
     free(cache->entries);
     gtmutex_unlock(&cache->threadlock);
-    free(cache);
 }
 
 /// @brief Clear the cache, reuable after as we dont the file cache itself, just entries.

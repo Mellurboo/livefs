@@ -35,6 +35,9 @@
 void exitcall(void){
     printf(INFO "livefs has closed\n");
     close(get_server_socket());
+
+    server_free_all_cache();
+    clear_config(get_global_config_structure());
 }
 
 /// Gets the server socket
@@ -54,7 +57,7 @@ int main(int argc, const char *argv[]){
     
     exit_handlers();
 
-    global_config_t *global_config = create_global_config_structure();
+    global_config = create_global_config_structure();
     if (!global_config){
         printf(FATAL "Failure to register config file or it doesnt exsist!\n");
         return -1;
@@ -81,6 +84,5 @@ int main(int argc, const char *argv[]){
     client_listener(server_socket);
 
     // Clean up, at this point the server is closed
-    clear_config(global_config);
-    close(server_socket);
+    exit(0);
 }

@@ -25,8 +25,12 @@ char *build_descriptor_path(const char* file_path) {
         return NULL;
     }
 
-    snprintf(descriptor_file, sizeof(descriptor_file), "%s%s.cfg", get_parent_directory_path(file_path), get_file_directory_name(file_path));
+    char* parent_directory_path = get_parent_directory_path(file_path);
+
+    snprintf(descriptor_file, sizeof(descriptor_file), "%s%s.cfg", parent_directory_path, get_file_directory_name(file_path));
     printf(REQUEST "Found a descriptor file: %s\n", descriptor_file);
+    
+    free(parent_directory_path);
     return descriptor_file;
 }
 

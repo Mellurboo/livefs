@@ -8,4 +8,7 @@ void server_cache_init(void){
     cache_new(&directory_descriptor_cache, DESCRIPTOR_FILE_CACHE_SIZE);
 }
 
-void server_free_all_cache(void);
+void server_free_all_cache(void){
+    cache_free(&file_data_cache);
+    cache_free(&directory_descriptor_cache);
+}
