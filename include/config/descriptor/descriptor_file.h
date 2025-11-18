@@ -9,3 +9,7 @@ typedef struct descriptor{
 /// @param file_path target directory
 /// @return pointer to file
 descriptor_t *read_descriptor_file(const char* file_path);
+
+/// @brief memory safe free, use this instead of free(descriptor)
+/// @param descriptor 
+void free_descriptor(descriptor_t *descriptor);

@@ -28,7 +28,7 @@ char *build_descriptor_path(const char* file_path) {
     char* parent_directory_path = get_parent_directory_path(file_path);
 
     snprintf(descriptor_file, sizeof(descriptor_file), "%s%s.cfg", parent_directory_path, get_file_directory_name(file_path));
-    printf(REQUEST "Found a descriptor file: %s\n", descriptor_file);
+    printf(REQUEST "Descriptor File Expected at: %s\n", descriptor_file);
     
     free(parent_directory_path);
     return descriptor_file;
@@ -46,10 +46,23 @@ descriptor_t *read_descriptor_file(const char* file_path){
 
     descriptor_t *descriptor = calloc(1, sizeof(descriptor_t));
     if (!descriptor) return NULL;
+
+    const char *page = file_get_value(descriptor_file, "page");
+    if (page){
+        char *webpage = strdup(page);
+        trim_whitespaces(webpage);
+        descriptor->page = webpage;
+    }
     
     descriptor->hidden = file_get_int(descriptor_file, "hidden");
-    descriptor->page = file_get_value(descriptor_file, "page");
-    descriptor->page = trim_whitespaces(descriptor->page);
 
     return descriptor;
+}
+
+/// @brief memory safe free, use this instead of free(descriptor)
+/// @param descriptor 
+void free_descriptor(descriptor_t *descriptor){
+    if (!descriptor) return;
+    free(descriptor->page);
+    free(descriptor);
 }

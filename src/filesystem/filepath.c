@@ -11,12 +11,14 @@
 #include <utils/terminal.h>
 #include <filesystem/filepath.h>
 #include <socket/request_arguement.h>
+#include <config/descriptor/descriptor_file.h>
 #include <config/global_config/global_config_file.h>
 
 /// @brief check if the path provided exsists
 /// @param path target
 /// @return success or exit
 int path_exists(const char *path) {
+    if (!path) return 0;
     struct stat st;
     return stat(path, &st) == 0; // returns 1 if exists, 0 if not
 }
@@ -42,21 +44,13 @@ void normalize_path(char *path) {
 /// @param filename target filename
 const char *build_file_path(const char *filename) {
     const char *root_path = parse_config_root_path();
-    if (!root_path || !*root_path) {
-        fprintf(stderr, FATAL "Root Path was empty\n");
-        return "";
-    }
 
     if (!filename) filename = "";         // Check NULL first
     if (filename[0] == '/') filename++;   // Skip leading '/'
 
     static char full_path[PATH_MAX];
 
-    if (strcmp(filename, "") == 0) {     // serve default index.html
-        snprintf(full_path, sizeof(full_path), "%s/index.html", root_path);
-    } else {
-        snprintf(full_path, sizeof(full_path), "%s/%s", root_path, filename);
-    }
+    snprintf(full_path, sizeof(full_path), "%s/%s", root_path, filename);
 
     normalize_path(full_path);
     return strip_arguemnts(full_path);

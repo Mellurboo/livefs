@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <utils/path.h>
 #include <vendor/gt/gt.h>
 #include <utils/terminal.h>
 #include <socket/async/async.h>
@@ -81,6 +82,7 @@ void cache_clear(file_cache_t *cache){
 /// @return file data
 const char *cache_get_file(file_cache_t *cache, const char *path, size_t *size_out){
     // we can use path_exsists here but we need some other stat functions so we will stat it
+    if (is_directory(path)) return NULL;
     struct stat st;
     if (stat(path, &st) != 0) return NULL;
     gtmutex_lock(&cache->threadlock);

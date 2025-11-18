@@ -20,7 +20,7 @@
 #include <config/descriptor/descriptor_file.h>
 #include <config/global_config/global_config_file.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 8096
 
 request_t *parse_request_structure(int client_socket, const char *request_line){
     request_t *request = calloc(1, sizeof(request_t));
@@ -66,49 +66,65 @@ descriptor_t *get_descriptor_file(int client_socket, const char *full_path){
 
 /// @brief dont send the entire file at once, buffer it
 /// @param client_socket client socket
-/// @param buffer 1kib buffer
-/// @param fp file pointer
+/// @param data pointer to file data
+/// @param size bytes to send
 void send_buffered_bytes(int client_socket, SSL *ssl, const char *data, size_t size){
-    char databuffer[BUFFER_SIZE];
+    // no need for a stack buffer; send direct from file buffer
     size_t sent = 0;
 
     while (sent < size){
         size_t remaining = size - sent;
-        size_t chunk = (remaining > (size_t)BUFFER_SIZE) ? (size_t)BUFFER_SIZE : remaining;
-        
-        memcpy(databuffer, data + sent, chunk);
-        ssize_t w = send_data(client_socket, ssl, databuffer, chunk);
-        
-        if (w < 0){
-            fprintf(stderr, ERROR "sending data, send_data = %zd", w);
-            break;
-        }
+        size_t chunk = remaining > BUFFER_SIZE ? BUFFER_SIZE : remaining;
 
-        if ((size_t) w > chunk){
-            fprintf(stderr, WARN "send_data returned more data than expected, %zd, requested only %zu this isnt fatal but indicitive of something catastrophic?\n", w, chunk);
+        // write directly from file buffer saving us a memcpy call
+        ssize_t w = send_data(client_socket, ssl, data + sent, chunk);
+
+        if (w < 0){
+            fprintf(stderr, ERROR "sending data failed, send_data = %zd\n", w);
+            break;
+        }else if (w == 0){
+            fprintf(stderr, WARN "send_data returned 0 (socket blocked/closed), sent=%zu/%zu\n", sent, size);
+            break;
+        }else if ((size_t)w > chunk){
+            fprintf(stderr, WARN "send_data returned more bytes (%zd) than requested (%zu). Capped.\n",w, chunk);
             w = (ssize_t)chunk;
         }
 
         sent += (size_t)w;
-
         gtblockfd(client_socket, GTBLOCKOUT);
+    }
+
+    if (sent < size){
+        fprintf(stderr, ERROR "Incomplete send (%zu of %zu bytes written)\n", sent, size);
     }
 }
 
 ssize_t send_data(int client_socket, SSL *ssl, const void *data, size_t size){
+    if (!data || size == 0)
+        return 0;
+
     if (ssl){
-        size_t w = ssl_async_write(ssl, data, size);
+        // SSL write path (async)
+        ssize_t w = (ssize_t)ssl_async_write(ssl, data, size);
         if (w <= 0){
-            int err = SSL_get_error(ssl, w);
+            int err = SSL_get_error(ssl, (int)w);
             fprintf(stderr, ERROR "SSL Error: %i\n", err);
             return -1;
         }
         return w;
     }else{
-        return async_send(client_socket, data, size, 0);
+        // non-SSL write path (async)
+        ssize_t w = async_send(client_socket, data, size, 0);
+        if (w < 0){
+            // normalize common async conditions
+            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+                return 0; // retry allowed
+            fprintf(stderr, ERROR "send() error: %s\n", strerror(errno));
+            return -1;
+        }
+        return w;
     }
 }
-
 /// @brief serve the client with the file
 /// @param client_sock client socket
 /// @param request_line full HTTP request
@@ -134,23 +150,32 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
     // no trailing slash -> redirect
     if (is_directory(file_path) && request->path[strlen(request->path) -1] != '/') {
         http_redirect(client_socket, request);
+        free(request);
         return;
     }
 
     // get descriptors
     descriptor_t *descriptor = get_descriptor_file(client_socket, file_path);
-    if (!descriptor || descriptor->hidden == 1){
-        http_not_found_header(client_socket);
-        free(request);
-        return;
+    if (global_config ->enforce_descriptor_files){
+        if (!descriptor){
+            fprintf(stderr, BADRESPONSE "No valid descriptor found while descriptors are enforced\n");
+            http_not_found_header(client_socket);
+            free(request);
+            return;
+        }else if (descriptor->hidden){
+            fprintf(stderr, BADRESPONSE "Directory Requested is set to be hidden\n");
+            http_not_found_header(client_socket);
+            free(request);
+            return;
+        }
     }
 
     // verify the path
     if (!path_exists(file_path)){
         fprintf(stderr, BADRESPONSE "Path '%s' doesn't exsist or failed to read\n", file_path);
         http_not_found_header(client_socket);
+        free_descriptor(descriptor);
         free(request);
-        free(descriptor);
         return;
     }
 
@@ -166,8 +191,8 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
         if (!filedata){
             fprintf(stderr, ERROR "Failed to read file '%s'\n", file_path);
             http_not_found_header(client_socket);
+            free_descriptor(descriptor);
             free(request);
-            free(descriptor);
             return;
         }
     }else{  // serving directory page
@@ -176,8 +201,8 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
         if (w < 0 || w >= (int)sizeof(webpage_path)){
             fprintf(stderr, "Filepath too long joining '%s' and '%s'\n", file_path, descriptor->page);
             http_internal_server_error(client_socket);
+            free_descriptor(descriptor);
             free(request);
-            free(descriptor);
             return;
         }
 
@@ -187,8 +212,8 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
         if (!filedata){
             fprintf(stderr, BADRESPONSE "Failed to read webpage '%s'\n", webpage_path);
             http_not_found_header(client_socket);
+            free_descriptor(descriptor);
             free(request);
-            free(descriptor);
             return;
         }
     }
@@ -197,9 +222,9 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
     send_data(client_socket, ssl, success_header, strlen(success_header));
 
     send_buffered_bytes(client_socket, ssl, filedata, filesize);
-    printf(SUCREQUEST "Served file '%s' to Client\n", file_path);
+    printf(SUCREQUEST "Served Request '%s' to Client\n", file_path);
     
+    free_descriptor(descriptor);
     free(request);
-    free(descriptor);
     return;
 }

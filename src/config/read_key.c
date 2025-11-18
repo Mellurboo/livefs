@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <utils/terminal.h>
 #include <utils/path.h>
 #include <linux/limits.h>
+#include <utils/terminal.h>
 
 #define PATTERN_SIZE    128
 
@@ -49,7 +49,7 @@ char *get_key_in_file(char *pattern, const char *config_file, const char *key){
     
     }
 
-    fprintf(stderr, ERROR "Failed to find key requested? '%s'", key);
+    fprintf(stderr, WARN "Failed to find key requested? '%s'\n", key);
     return NULL;
 }
 
