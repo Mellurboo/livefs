@@ -16,22 +16,23 @@
 /// @brief Locates and Opens the descriptor file for the given path
 /// @param directory_path target path
 /// @return FILE descriptor path
-char *build_descriptor_path(const char* file_path) {
-    if (!file_path) return NULL;
-    static char descriptor_file[PATH_MAX];
+void build_descriptor_path(char *buf, size_t buf_size, const char *file_path) {
+    if (!file_path || !buf) return;
 
     if (is_directory(file_path) == -1){
         fprintf(stderr, ERROR "Couldnt stat path, does the target exsist?\n");
-        return NULL;
+        buf[0] = '\0';
+        return;
     }
 
     char* parent_directory_path = get_parent_directory_path(file_path);
+    char dir_name[PATH_MAX];
+    get_file_directory_name(dir_name, sizeof(dir_name), file_path);
 
-    snprintf(descriptor_file, sizeof(descriptor_file), "%s%s.cfg", parent_directory_path, get_file_directory_name(file_path));
-    printf(REQUEST "Found a descriptor file: %s\n", descriptor_file);
-    
+    snprintf(buf, buf_size, "%s%s.cfg", parent_directory_path, dir_name);
+    printf(REQUEST "Found a descriptor file: %s\n", buf);
+
     free(parent_directory_path);
-    return descriptor_file;
 }
 
 /// @brief builds a path for the descriptor file and returns the file
@@ -41,7 +42,11 @@ descriptor_t *read_descriptor_file(const char* file_path){
     if (!file_path) return NULL;
     size_t filesize = 0;
 
-    const char *descriptor_file = cache_get_file(&directory_descriptor_cache, build_descriptor_path(file_path), &filesize);
+    char descriptor_path[PATH_MAX];
+    build_descriptor_path(descriptor_path, sizeof(descriptor_path), file_path);
+    if (!descriptor_path[0]) return NULL;
+
+    const char *descriptor_file = cache_get_file(&directory_descriptor_cache, descriptor_path, &filesize);
     if (!descriptor_file) return NULL;
 
     descriptor_t *descriptor = calloc(1, sizeof(descriptor_t));

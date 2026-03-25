@@ -15,18 +15,12 @@ int request_has_arguement(const char *request, const char *argument){
     return strstr(request, search_request) != NULL;
 }
 
-/// @brief removes the arguemnts from a Request
-/// @param request target
-/// @return stripped request
-const char *strip_arguemnts(const char *request){
-    static char clean_request[PATH_MAX];
-    if (!request) return "";
-
-    strncpy(clean_request, request, sizeof(clean_request) - 1);
-    clean_request[sizeof(clean_request) - 1] = '\0';
-
-    char *arg_token = strchr(clean_request, '?');
+/// @brief removes the arguemnts from a Request in place
+/// @param buf target buffer to strip in place
+/// @param buf_size size of buffer
+void strip_arguemnts_buf(char *buf, size_t buf_size){
+    (void)buf_size;
+    if (!buf) return;
+    char *arg_token = strchr(buf, '?');
     if (arg_token) *arg_token = '\0';
-
-    return clean_request;
 }

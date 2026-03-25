@@ -127,7 +127,7 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
 
     // build the full file path to serve
     char file_path[PATH_MAX];
-    strncpy(file_path, build_file_path(request->path), sizeof(file_path));
+    build_file_path(file_path, sizeof(file_path), request->path);
     file_path[sizeof(file_path) -1] = '\0';
     printf(INFO "Opening File: '%s'\n", file_path);
 
@@ -137,21 +137,23 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
         return;
     }
 
+    // get descriptors
     descriptor_t *descriptor = get_descriptor_file(client_socket, file_path);
     if (!descriptor){
         global_config_t *config = get_global_config_structure();
         if (config->enforce_descriptor_files){
+            fprintf(stderr, BADRESPONSE "Descriptor check failed for '%s' and enforcement is enabled\n", file_path);
             http_not_found_header(client_socket);
             free(request);
             return;
         }
-        
         descriptor = calloc(1, sizeof(descriptor_t));
         descriptor->hidden = 0;
         descriptor->page = "index.html";
     }
 
     if (descriptor->hidden == 1){
+        fprintf(stderr, BADRESPONSE "Path '%s' is hidden\n", file_path);
         http_not_found_header(client_socket);
         free(request);
         free(descriptor);
@@ -205,8 +207,9 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
             return;
         }
     }
-    
-    const char *success_header = http_success(basename(filename), filesize, request_has_arguement(request->path, "download"));
+
+    char success_header[512];
+    http_success(success_header, sizeof(success_header), basename(filename), filesize, request_has_arguement(request->path, "download"));
     send_data(client_socket, ssl, success_header, strlen(success_header));
 
     send_buffered_bytes(client_socket, ssl, filedata, filesize);

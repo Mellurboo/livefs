@@ -40,26 +40,25 @@ void normalize_path(char *path) {
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
 /// @param filename target filename
-const char *build_file_path(const char *filename) {
+void build_file_path(char *buf, size_t buf_size, const char *filename) {
     const char *root_path = parse_config_root_path();
     if (!root_path || !*root_path) {
         fprintf(stderr, FATAL "Root Path was empty\n");
-        return "";
+        buf[0] = '\0';
+        return;
     }
 
     if (!filename) filename = "";         // Check NULL first
     if (filename[0] == '/') filename++;   // Skip leading '/'
 
-    static char full_path[PATH_MAX];
-
     if (strcmp(filename, "") == 0) {     // serve default index.html
-        snprintf(full_path, sizeof(full_path), "%s/index.html", root_path);
+        snprintf(buf, buf_size, "%s/index.html", root_path);
     } else {
-        snprintf(full_path, sizeof(full_path), "%s/%s", root_path, filename);
+        snprintf(buf, buf_size, "%s/%s", root_path, filename);
     }
 
-    normalize_path(full_path);
-    return strip_arguemnts(full_path);
+    normalize_path(buf);
+    strip_arguemnts_buf(buf, buf_size);
 }
 
 /// @brief Builds the Config Root Path, the server will read from here when looking for files
@@ -96,8 +95,7 @@ const char *parse_config_root_path(void){
 /// @brief gets the stripped name of a parent directory
 /// @param file_path target path
 /// @return only returns the name of the directory name, NOT WHOLE PATH!
-const char *get_file_directory_name(const char *file_path){
-    static char name[PATH_MAX];
+void get_file_directory_name(char *out, size_t out_size, const char *file_path){
     char path[PATH_MAX];
 
     // sanitize file path
@@ -112,17 +110,16 @@ const char *get_file_directory_name(const char *file_path){
     if (is_directory(file_path) == 1) {
         const char *last_slash = strrchr(path, '/');
         const char *dir_name = last_slash ? last_slash + 1 : path;
-        snprintf(name, sizeof(name), "%s", dir_name);
-        return name;
+        snprintf(out, out_size, "%s", dir_name);
+        return;
     }
 
     char *last_slash = strrchr(path, '/');
-    if (!last_slash) return NULL; // no parent dir
+    if (!last_slash) { out[0] = '\0'; return; } // no parent dir
     *last_slash = '\0';
 
     char *parent_slash = strrchr(path, '/');
     const char *parent_name = parent_slash ? parent_slash + 1 : path;
 
-    snprintf(name, sizeof(name), "%s", parent_name);
-    return name;
+    snprintf(out, out_size, "%s", parent_name);
 }

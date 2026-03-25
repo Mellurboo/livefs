@@ -9,4 +9,4 @@ int request_has_arguement(const char *request, const char *argument);
 /// @brief removes the arguemnts from a Request
 /// @param request target
 /// @return stripped request
-const char *strip_arguemnts(const char *request);
+void strip_arguemnts_buf(char *buf, size_t buf_size);

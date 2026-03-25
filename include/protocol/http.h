@@ -39,4 +39,4 @@ void http_not_found_header(int client_socket);
 void http_im_a_teapot(int client_socket);
 
 /// @return Place HTTP 200 in Buffer Provided
-const char *http_success(const char *fname, off_t content_size, int force_download);
+void http_success(char *buf, size_t buf_size, const char *fname, off_t content_size, int force_download);

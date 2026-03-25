@@ -4,7 +4,7 @@
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
 /// @param filename target filename
-const char *build_file_path(const char *filename);
+void build_file_path(char *buf, size_t buf_size, const char *filename);
 
 /// @param buf dest buffer
 /// @param buf_size dest buffer size
@@ -14,7 +14,7 @@ const char *parse_config_root_path();
 /// @brief gets the stripped name of a parent directory
 /// @param file_path target path
 /// @return only returns the name of the directory name, NOT WHOLE PATH!
-const char *get_file_directory_name(const char *file_path);
+void get_file_directory_name(char *out, size_t out_size, const char *file_path);
 
 /// @brief check if the path provided exsists
 /// @param path target
