@@ -53,8 +53,8 @@ descriptor_t *read_descriptor_file(const char* file_path){
     if (!descriptor) return NULL;
     
     descriptor->hidden = file_get_int(descriptor_file, "hidden");
-    descriptor->page = file_get_value(descriptor_file, "page");
-    descriptor->page = trim_whitespaces(descriptor->page);
+    char *page_val = strdup(file_get_value(descriptor_file, "page"));
+    descriptor->page = trim_whitespaces(page_val);
 
     return descriptor;
 }

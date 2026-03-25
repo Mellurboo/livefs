@@ -76,23 +76,24 @@ int file_get_int(const char *file, const char *key){
 /// @brief gets the value of any non number key
 /// @param config_file config file context
 /// @param key name
-/// @param out output buffer
-/// @param out_size output buffer size
-void file_get_value(const char *file, const char *key, char *out, size_t out_size){
+/// @return value of key
+char *file_get_value(const char *file, const char *key){
     char pattern[PATTERN_SIZE];
     char *pos = get_key_in_file(pattern, file, key);
 
     if (!pos || *pos == '\n' || *pos == '\0'){
-        out[0] = '\0';
-        return;
+        return "";
     }
 
     // extract entire line
     const char *end = strchr(pos, '\n');
+    static char value[PATH_MAX];
 
     size_t len = end ? (size_t)(end - pos) : strlen(pos);
-    if (len >= out_size) len = out_size - 1;
+    if (len >= sizeof(value)) len = sizeof(value) - 1;
 
-    memcpy(out, pos, len);
-    out[len] = '\0';
+    memcpy(value, pos, len);
+    value[len] = '\0';
+
+    return value;
 }
