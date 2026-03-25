@@ -140,6 +140,8 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
     // get descriptors
     descriptor_t *descriptor = get_descriptor_file(client_socket, file_path);
     if (!descriptor || descriptor->hidden == 1){
+        fprintf(stderr, BADRESPONSE "Descriptor check failed for '%s': descriptor=%p hidden=%d\n",
+                    file_path, (void*)descriptor, descriptor ? descriptor->hidden : -1);
         http_not_found_header(client_socket);
         free(request);
         return;
