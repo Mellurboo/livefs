@@ -137,13 +137,24 @@ void send_file_request(int client_socket, SSL *ssl, const char *request_line) {
         return;
     }
 
-    // get descriptors
     descriptor_t *descriptor = get_descriptor_file(client_socket, file_path);
-    if (!descriptor || descriptor->hidden == 1){
-        fprintf(stderr, BADRESPONSE "Descriptor check failed for '%s': descriptor=%p hidden=%d\n",
-                    file_path, (void*)descriptor, descriptor ? descriptor->hidden : -1);
+    if (!descriptor){
+        global_config_t *config = get_global_config_structure();
+        if (config->enforce_descriptor_files){
+            http_not_found_header(client_socket);
+            free(request);
+            return;
+        }
+        
+        descriptor = calloc(1, sizeof(descriptor_t));
+        descriptor->hidden = 0;
+        descriptor->page = "index.html";
+    }
+
+    if (descriptor->hidden == 1){
         http_not_found_header(client_socket);
         free(request);
+        free(descriptor);
         return;
     }
 
