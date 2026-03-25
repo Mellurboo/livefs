@@ -84,14 +84,12 @@ void send_buffered_bytes(int client_socket, SSL *ssl, const char *data, size_t s
             break;
         }
 
-        if ((size_t) w > chunk){
-            fprintf(stderr, WARN "send_data returned more data than expected, %zd, requested only %zu this isnt fatal but indicitive of something catastrophic?\n", w, chunk);
-            w = (ssize_t)chunk;
-        }
+        if ((size_t)w > chunk) w = (ssize_t)chunk;
 
         sent += (size_t)w;
 
-        gtblockfd(client_socket, GTBLOCKOUT);
+        if (sent < size)
+            gtblockfd(client_socket, GTBLOCKOUT);
     }
 }
 
